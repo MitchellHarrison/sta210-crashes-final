@@ -24,6 +24,7 @@ crashes <- read_csv("data/crashes_10k.csv")
 - 2 or fewer vehicles only
 - response: person casualty (injured + killed)
 - removed rows with >2 vehicles
+- add column to track whether or not there are injuries/fatalities
 5:12
 12:5
 5:9
@@ -62,17 +63,28 @@ crashes <- crashes |>
         "evening",
       hms(crash_time) > hm("21:00") | hms(crash_time) <= hm("5:00") ~
         "night"
-    )
+    ),
+    
+    # add ordinal column for injuries v. fatalities
+    has_injury = number_of_persons_injured > 0,
+    has_fatality = number_of_persons_killed >0,
+    has_casualty = has_injury | has_fatality,
+    severity = case_when(
+      has_fatality ~ "fatal",
+      has_injury ~ "injury",
+      T ~ "no casualties"
+    ),
+    severity = factor(severity, levels = c("no casualties", "injury", "fatal")),
+    
+    # add Julian date column
+    crash_date = as.Date(crash_date, format = "%m/%d/%Y"),
+    crash_day = weekdays(crash_date, abbreviate = F),
+    yday = yday(crash_date)
   )
-
-# Convert date column to proper format
-crashes$crash_date <- as.Date(crashes$crash_date, format = "%m/%d/%Y")
-
-# Create a new column called "crash_date" with the weekday name
-crashes$crash_day <- weekdays(crashes$crash_date, abbreviate = FALSE)
 ```
 
 # Exploratory Analysis
+## Time of Day
 ```{r}
 #| label: viz-time-density
 crashes |>
@@ -108,14 +120,46 @@ crashes |>
   )
 ```
 
+## Day of the year
 ```{r}
-#| label: viz-stacked-bar-vehicle
+#| label: density-severity-day-of-year
 crashes |>
-  mutate(
-    has_cas = if_else(num_casualties > 0, T, F)
-    ) |>
-  ggplot(aes(x = vehicle_type_code_1, fill = has_cas)) +
-  geom_bar(position = "fill")
+  ggplot(aes(x = yday)) +
+  geom_density(data = filter(crashes, severity == "no casualties"), 
+               aes(group = severity), color = "lightgray") +
+  geom_density(data = filter(crashes, severity == "injury"), color = "red") +
+  annotate("text", color = "red", label = "Casualties", x = 27, y = 0.0019,
+           fontface = "bold", hjust = "left") +
+  annotate("text", color = "lightgray", label = "No casualties", x = 5, 
+           y = 0.0029, fontface = "bold", hjust = "left") +
+  theme_classic() +
+  labs(
+    x = "Day of the year",
+    y = "Density",
+    title = "Colder months have lower vehicular casualties",
+    subtitle = "NYC car accident density over all years by level of severity"
+  )
 ```
+
+## Borough
+```{r}
+#| label: viz-hist-by-street
+crashes |>
+  group_by(borough) |>
+  summarise(count = n()) |>
+  mutate(color = if_else(is.na(borough), "red", "lightgray")) |>
+  ggplot(aes(x = borough, y = count, fill = color)) +
+  geom_col() +
+  scale_fill_identity() +
+  theme_classic() +
+  labs(
+    x = NULL,
+    y = "Count",
+    title = "\"Missing\" is the biggest borough in NYC",
+    subtitle = paste("Missingness of borough variable is too great to include",
+                     "in the model")
+  )
+```
+
 
 # Results
