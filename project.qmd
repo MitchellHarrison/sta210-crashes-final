@@ -1,6 +1,7 @@
 ---
 title: "Insert title here"
 subtitle: "Insert subtitle here"
+format: pdf
 execute: 
   warning: false
   execute: false
@@ -9,53 +10,6 @@ execute:
 # Introduction
 
 ## Dataset
-```{r}
-view(crashes)
-
-class(crashes$contributing_factor_vehicle_1)
-
-levels(crashes$contributing_factor_vehicle_1)
-
-levels(crashes$contributing_factor_vehicle_2)
-
-crashes %>%
-  filter(is.na(borough)) %>%
-  count()
-
-crashes %>%
-  filter(is.na(borough)) %>%
-  filter(!is.na(latitude)) %>%
-  count()
-
-crashes %>%
-  filter(number_of_persons_killed != 0) %>%
-  count()
-
-crashes %>%
-  filter(num_casualties > 1) %>%
-  count()
-
-crashes %>%
-  filter(num_casualties > 2) %>%
-  count()
-
-crashes %>%
-  filter(num_casualties > 3) %>%
-  count()
-
-crashes %>%
-  filter(num_casualties > 4) %>%
-  count()
-
-crashes %>%
-  filter(num_casualties > 5) %>%
-  count()
-
-crashes %>%
-  filter(num_casualties > 6) %>%
-  count()
-```
-
 Our dataset is composed of harvested and compiled data from New York City Police
 Department (NYPD) open access data on all police reported motor vehicle
 collisions (MVC) in all five boroughs of New York City from July 1st, 2012
@@ -91,6 +45,7 @@ library(lubridate)
 #| label: read-data
 crashes <- read_csv("data/crashes_10k.csv")
 ```
+
 
 # Methodology
 
@@ -229,6 +184,51 @@ crashes <- crashes %>%
 
 ```
 
+```{r}
+#| label: examine-data
+class(crashes$contributing_factor_vehicle_1)
+
+levels(crashes$contributing_factor_vehicle_1)
+
+levels(crashes$contributing_factor_vehicle_2)
+
+crashes %>%
+  filter(is.na(borough)) %>%
+  count()
+
+crashes %>%
+  filter(is.na(borough)) %>%
+  filter(!is.na(latitude)) %>%
+  count()
+
+crashes %>%
+  filter(number_of_persons_killed != 0) %>%
+  count()
+
+crashes %>%
+  filter(num_casualties > 1) %>%
+  count()
+
+crashes %>%
+  filter(num_casualties > 2) %>%
+  count()
+
+crashes %>%
+  filter(num_casualties > 3) %>%
+  count()
+
+crashes %>%
+  filter(num_casualties > 4) %>%
+  count()
+
+crashes %>%
+  filter(num_casualties > 5) %>%
+  count()
+
+crashes %>%
+  filter(num_casualties > 6) %>%
+  count()
+```
 # Exploratory Analysis
 ## Time of Day
 ```{r}
