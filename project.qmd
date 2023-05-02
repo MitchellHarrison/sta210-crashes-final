@@ -54,40 +54,6 @@ crashes %>%
 crashes %>%
   filter(num_casualties > 6) %>%
   count()
-
-crashes <- crashes %>%
-  mutate(across(starts_with("contributing_factor_vehicle"),
-                ~ case_when(
-                  . %in% c("Alcohol Involvement", "Drugs (Illegal)",
-                           "Prescription Medication") ~ "Impaired",
-                  . %in% c("Driver Inattention/Distraction", "Fatigued/Drowsy",
-                           "Lost Consciousness", "Other Electronic Device",
-                           "Outside Car Distraction", "Passenger Distraction")
-                  ~ "Distraction/Inattention/Fatigue",
-                  . %in% c("Following Too Closely", "Passing Too Closely",
-                           "Unsafe Lane Changing",
-                           "Unsafe Speed",
-                           "Backing Unsafely") ~ "Aggressive/Reckless Driving",
-                  . %in% c("Failure to Yield Right-of-Way",
-                           "Pedestrian/Bicyclist/Other Pedestrian Error/Confusion",
-                           "Reaction to Other Uninvolved Vehicle",
-                           "Reaction to Uninvolved Vehicle",
-                           "Turning Improperly")
-                  ~ "Failure to Obey Traffic Signs/Signals/Rules",
-                  . %in% c("Lane Marking Improper/Inadequate",
-                           "Obstruction/Debris", "Other Vehicular",
-                           "Oversized Vehicle", "Pavement Defective",
-                           "Pavement Slippery",
-                           "Traffic Control Device Improper/Non-Working",
-                           "Traffic Control Disregarded",
-                           "View Obstructed/Limited")
-                  ~ "Other Technical/Mechanical Factors",
-                  TRUE ~ "Other/Unknown"
-                )
-  ))
-
-view(crashes)
-
 ```
 
 Our dataset is composed of harvested and compiled data from New York City Police
@@ -193,6 +159,41 @@ crashes <- crashes |>
   )
 ```
 
+```{r}
+#| label: correct-categories
+ped_bike <- "Pedestrian/Bicyclist/Other Pedestrian Error/Confusion"
+crashes <- crashes %>%
+  mutate(across(starts_with("contributing_factor_vehicle"),
+                ~ case_when(
+                  . %in% c("Alcohol Involvement", "Drugs (Illegal)",
+                           "Prescription Medication") ~ "Impaired",
+                  . %in% c("Driver Inattention/Distraction", "Fatigued/Drowsy",
+                           "Lost Consciousness", "Other Electronic Device",
+                           "Outside Car Distraction", "Passenger Distraction")
+                           ~ "Distraction/Inattention/Fatigue",
+                  . %in% c("Following Too Closely", "Passing Too Closely",
+                           "Unsafe Lane Changing",
+                           "Unsafe Speed",
+                           "Backing Unsafely") ~ "Aggressive/Reckless Driving",
+                  . %in% c("Failure to Yield Right-of-Way",
+                           ped_bike,
+                           "Reaction to Other Uninvolved Vehicle",
+                           "Reaction to Uninvolved Vehicle",
+                           "Turning Improperly")
+                           ~ "Failure to Obey Traffic Signs/Signals/Rules",
+                  . %in% c("Lane Marking Improper/Inadequate",
+                           "Obstruction/Debris", "Other Vehicular",
+                           "Oversized Vehicle", "Pavement Defective",
+                           "Pavement Slippery",
+                           "Traffic Control Device Improper/Non-Working",
+                           "Traffic Control Disregarded",
+                           "View Obstructed/Limited")
+                           ~ "Other Technical/Mechanical Factors",
+                  TRUE ~ "Other/Unknown"
+                )
+  ))
+```
+
 # Exploratory Analysis
 ## Time of Day
 ```{r}
@@ -230,6 +231,15 @@ crashes |>
   )
 ```
 
+Of accidents with one or more casualties, those happening on Saturdays and
+Sundays appear to occur disproportionately late at night and with a notably
+smaller peak around 5:00 pm. While there is variance around the weekend, the
+general pattern stays the same between all seven days. To account for this, we
+will introduce a random effect based on the days of the week to allow 
+information sharing between them. We anticipate that our model's performance 
+will benefit from such a change, and this random effect will end up in the 
+final model after performance evaluation.
+
 ## Day of the year
 ```{r}
 #| label: viz-density-severity-day-of-year
@@ -251,6 +261,12 @@ crashes |>
   )
 ```
 
+The variance in density between levels of severity of accidents through all 
+years is relatively low. However, we see disproportionately severe accidents
+around the late summer/early spring months and minor accidents in the early
+winter months. We will include the day of the year in our initial model, but it
+may get cut during model evaluation.
+
 ## Borough
 ```{r}
 #| label: viz-hist-by-street
@@ -270,5 +286,11 @@ crashes |>
                      "in the model")
   )
 ```
+
+We have far too many missing values to include borough in our model. If we could
+verify that borough was Missing Completely At Random (MCAR), we could include it
+in our complete-case model. Still, unfortunately, we are unable to verify the
+missingness mechanism and are therefore uncomfortable with possible performance
+impacts by using borough in our final model.
 
 # Results
