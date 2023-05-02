@@ -56,6 +56,39 @@ crashes %>%
   filter(num_casualties > 6) %>%
   count()
 
+crashes <- crashes %>%
+  mutate(across(starts_with("contributing_factor_vehicle"),
+                ~ case_when(
+                  . %in% c("Alcohol Involvement", "Drugs (Illegal)",
+                           "Prescription Medication") ~ "Impaired",
+                  . %in% c("Driver Inattention/Distraction", "Fatigued/Drowsy",
+                           "Lost Consciousness", "Other Electronic Device",
+                           "Outside Car Distraction", "Passenger Distraction")
+                  ~ "Distraction/Inattention/Fatigue",
+                  . %in% c("Following Too Closely", "Passing Too Closely",
+                           "Unsafe Lane Changing",
+                           "Unsafe Speed",
+                           "Backing Unsafely") ~ "Aggressive/Reckless Driving",
+                  . %in% c("Failure to Yield Right-of-Way",
+                           "Pedestrian/Bicyclist/Other Pedestrian Error/Confusion",
+                           "Reaction to Other Uninvolved Vehicle",
+                           "Reaction to Uninvolved Vehicle",
+                           "Turning Improperly")
+                  ~ "Failure to Obey Traffic Signs/Signals/Rules",
+                  . %in% c("Lane Marking Improper/Inadequate",
+                           "Obstruction/Debris", "Other Vehicular",
+                           "Oversized Vehicle", "Pavement Defective",
+                           "Pavement Slippery",
+                           "Traffic Control Device Improper/Non-Working",
+                           "Traffic Control Disregarded",
+                           "View Obstructed/Limited")
+                  ~ "Other Technical/Mechanical Factors",
+                  TRUE ~ "Other/Unknown"
+                )
+  ))
+
+view(crashes)
+
 ```
 
 Our dataset is composed of harvested and compiled data from New York City Police Department (NYPD) open access data on all police reported motor vehicle collisions (MVC) in all five boroughs of New York City from July 1st, 2012 through April 24th, 2023. The police report from which individual MVC observations in our dataset hail (MV104-AN) is required to be filled out for MVC where someone is injured or killed, or which result in at least \$1,000 of total property damage. Notably, only one MV104-AN form is filled out for all involved in an accident, meaning each observation in our dataset represents a unique MVC.
