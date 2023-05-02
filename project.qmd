@@ -17,3 +17,20 @@ crashes <- read_csv("data/crashes_10k.csv")
 ```
 
 # Methodology
+- 2 or fewer vehicles only
+- response: person casualty (injured + killed)
+- removed rows with >2 vehicles
+
+# Results
+```{r}
+#| label: clean-data
+# remove accidents involving greater than 2 vehicles
+crashes <- crashes |>
+  filter(is.na(contributing_factor_vehicle_3), is.na(vehicle_type_code_3)) |>
+  select(!c(vehicle_type_code_3, vehicle_type_code_4, vehicle_type_code_5,
+            contributing_factor_vehicle_3, contributing_factor_vehicle_4,
+            contributing_factor_vehicle_5)) |>
+  
+  # add combined casualty column (injuries + fatalities)
+  mutate(num_casualties = number_of_persons_killed + number_of_persons_injured)
+```
