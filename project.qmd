@@ -8,29 +8,60 @@ execute:
 
 # Read Data/Libraries
 ```{r}
-#| label: read-data-libs
+#| label: import-libs
 library(tidyverse)
 library(tidymodels)
-library(janitor)
+library(lubridate)
+```
 
+```{r}
+#| label: read-data
 crashes <- read_csv("data/crashes_10k.csv")
 ```
 
 # Methodology
+- MCAR 
 - 2 or fewer vehicles only
 - response: person casualty (injured + killed)
 - removed rows with >2 vehicles
+5:12
+12:5
+5:9
+9:5
 
 # Results
 ```{r}
 #| label: clean-data
-# remove accidents involving greater than 2 vehicles
-crashes <- crashes |>
+crashes |>
+  # remove accidents involving greater than 2 vehicles
   filter(is.na(contributing_factor_vehicle_3), is.na(vehicle_type_code_3)) |>
+  
   select(!c(vehicle_type_code_3, vehicle_type_code_4, vehicle_type_code_5,
             contributing_factor_vehicle_3, contributing_factor_vehicle_4,
             contributing_factor_vehicle_5)) |>
   
-  # add combined casualty column (injuries + fatalities)
-  mutate(num_casualties = number_of_persons_killed + number_of_persons_injured)
+  mutate(
+    # add combined casualty column (injuries + fatalities)
+    num_casualties = number_of_persons_killed + number_of_persons_injured,
+    
+    # create factors
+    contributing_factor_vehicle_1 = as.factor(contributing_factor_vehicle_1),
+    contributing_factor_vehicle_2 = as.factor(contributing_factor_vehicle_2),
+    vehicle_type_code_1 = as.factor(vehicle_type_code_1),
+    vehicle_type_code_2 = as.factor(vehicle_type_code_2),
+    zip_code = as.factor(zip_code),
+    borough = as.factor(borough),
+    
+    # add time of day categories
+    time_day = case_when(
+      hms(crash_time) > hm("5:00") & hms(crash_time) <= hm("12:00") ~
+        "morning",
+      hms(crash_time) > hm("12:00") & hms(crash_time) <= hm("17:00") ~
+        "afternoon",
+      hms(crash_time) > hm("17:00") & hms(crash_time) <= hm("21:00") ~
+        "evening",
+      hms(crash_time) > hm("21:00") | hms(crash_time) <= hm("5:00") ~
+        "night"
+    )
+  )
 ```
