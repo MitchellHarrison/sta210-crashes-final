@@ -32,7 +32,7 @@ crashes <- read_csv("data/crashes_10k.csv")
 # Data Wrangling
 ```{r}
 #| label: clean-data
-crashes |>
+crashes <- crashes |>
   # remove accidents involving greater than 2 vehicles
   filter(is.na(contributing_factor_vehicle_3), is.na(vehicle_type_code_3)) |>
   
@@ -73,5 +73,49 @@ crashes$crash_day <- weekdays(crashes$crash_date, abbreviate = FALSE)
 ```
 
 # Exploratory Analysis
+```{r}
+#| label: viz-time-density
+crashes |>
+  filter(num_casualties > 0) |>
+  mutate(color = if_else(crash_day == "Sunday" | crash_day == "Saturday", 
+         "red", "gray")) |>
+  ggplot(aes(x = crash_time, group = crash_day)) +
+  geom_density(color = "lightgray") +
+  geom_density(
+    data = filter(crashes, num_casualties > 0, 
+                  crash_day == "Sunday" | crash_day == "Saturday"), 
+    color = "red"
+  ) +
+  geom_vline(xintercept = hm("9:00"), linetype = 3) +
+  geom_vline(xintercept = hm("17:00"), linetype = 3) +
+  annotate("text", label = "9:00 am", color = "gray", angle = 90,
+           x = hm("10:00"), y = 5e-06, hjust = "right", vjust = "bottom") +
+  annotate("text", label = "5:00 pm", color = "gray", angle = 90,
+           x = hm("16:30"), y = 5e-06, hjust = "right", vjust = "bottom") +
+  annotate("text", color = "red", label = "Weekend", x = hm("00:20"), 
+           hjust = "left", fontface = "bold", y = 8e-06) +
+  annotate("text", color = "gray", label = "Mon. - Fri.", x = hm("00:20"), 
+           hjust = "left", fontface = "bold", y = 1e-06) +
+  scale_color_identity() +
+  theme_classic() +
+  labs(
+    x = "Time of crash",
+    y = "Density",
+    title = "Weekend casualties are disproportionately in the early morning",
+    subtitle = paste("Time density of NYC car accidents with injuries or",
+                     "fatalities by day of week"),
+    color = "Weekday"
+  )
+```
+
+```{r}
+#| label: viz-stacked-bar-vehicle
+crashes |>
+  mutate(
+    has_cas = if_else(num_casualties > 0, T, F)
+    ) |>
+  ggplot(aes(x = vehicle_type_code_1, fill = has_cas)) +
+  geom_bar(position = "fill")
+```
 
 # Results
