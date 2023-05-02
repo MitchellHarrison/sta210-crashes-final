@@ -64,4 +64,13 @@ crashes |>
         "night"
     )
   )
+
+# Convert date column to proper format
+crashes$crash_date <- as.Date(crashes$crash_date, format = "%m/%d/%Y")
+
+# Create a new column called "crash_date" with the weekday name
+crashes$crash_day <- weekdays(crashes$crash_date, abbreviate = FALSE)
+
+view(crashes)
+
 ```
