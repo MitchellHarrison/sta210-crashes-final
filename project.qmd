@@ -154,11 +154,7 @@ crashes <- crashes |>
 ```
 
 # Exploratory Analysis
-<<<<<<< Updated upstream
 ## Time of Day
-=======
-
->>>>>>> Stashed changes
 ```{r}
 #| label: viz-time-density
 crashes |>
