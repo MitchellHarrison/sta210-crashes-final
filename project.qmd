@@ -29,7 +29,7 @@ crashes <- read_csv("data/crashes_10k.csv")
 5:9
 9:5
 
-# Results
+# Data Wrangling
 ```{r}
 #| label: clean-data
 crashes |>
@@ -70,7 +70,8 @@ crashes$crash_date <- as.Date(crashes$crash_date, format = "%m/%d/%Y")
 
 # Create a new column called "crash_date" with the weekday name
 crashes$crash_day <- weekdays(crashes$crash_date, abbreviate = FALSE)
-
-view(crashes)
-
 ```
+
+# Exploratory Analysis
+
+# Results
