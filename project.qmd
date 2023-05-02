@@ -80,7 +80,6 @@ individual MVC.
 `crash_date`
 
 # Read Data/Libraries
-
 ```{r}
 #| label: import-libs
 library(tidyverse)
@@ -104,7 +103,6 @@ crashes <- read_csv("data/crashes_10k.csv")
 12:5
 5:9
 9:5
-
 
 # Data Wrangling
 ```{r}
@@ -160,7 +158,7 @@ crashes <- crashes |>
 ```
 
 ```{r}
-#| label: correct-categories
+#| label: correct-factor-categories
 ped_bike <- "Pedestrian/Bicyclist/Other Pedestrian Error/Confusion"
 crashes <- crashes %>%
   mutate(across(starts_with("contributing_factor_vehicle"),
@@ -191,6 +189,7 @@ crashes <- crashes %>%
                            ~ "Other Technical/Mechanical Factors",
                   TRUE ~ "Other/Unknown"
                 )
+<<<<<<< Updated upstream
   ))
 
 crashes <- crashes %>%
@@ -226,6 +225,11 @@ crashes <- crashes %>%
 
 view(crashes)
 
+=======
+  )) |>
+  rename(factor1 = contributing_factor_vehicle_1, 
+         factor2 = contributing_factor_vehicle_2)
+>>>>>>> Stashed changes
 ```
 
 # Exploratory Analysis
@@ -326,5 +330,15 @@ verify that borough was Missing Completely At Random (MCAR), we could include it
 in our complete-case model. Still, unfortunately, we are unable to verify the
 missingness mechanism and are therefore uncomfortable with possible performance
 impacts by using borough in our final model.
+
+# Model Construction
+```{r}
+#| label: model-initial
+model1 <- glm(has_casualty ~ yday + time_day + factor1 + factor2 +
+                , 
+              data = crashes, family = "binomial")
+summary(model1)
+```
+
 
 # Results
