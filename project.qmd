@@ -189,8 +189,9 @@ crashes <- crashes %>%
                            ~ "Other Technical/Mechanical Factors",
                   TRUE ~ "Other/Unknown"
                 )
-<<<<<<< Updated upstream
-  ))
+  )) |>
+  rename(factor1 = contributing_factor_vehicle_1, 
+         factor2 = contributing_factor_vehicle_2)
 
 crashes <- crashes %>%
   mutate(across(starts_with("vehicle_type_code"),
@@ -217,19 +218,15 @@ crashes <- crashes %>%
                         "USPS", "UTIL", "Van", "VAN",
                         "VAN TRUCK") ~ "Commercial vehicles",
                   . %in% c("MOTOR SCOO", "Motorcycle",
-                        "MOTORCYCLE", "Motorscooter", "SCOOTER", "Moped") ~ "Motorcycles",
-                  . %in% c("E-Bike", "BICYCLE", "Bike", "E-Scooter") ~ "Non-Motor Vehicle",
+                        "MOTORCYCLE", "Motorscooter", "SCOOTER", "Moped") ~ 
+                    "Motorcycles",
+                  . %in% c("E-Bike", "BICYCLE", "Bike", "E-Scooter") ~ 
+                    "Non-Motor Vehicle",
                   . %in% c("FORK", "unk", "UNKNOWN", "OTHER") ~ "Other/Unknown",
                   TRUE ~ "Other/Unknown"
-  )))
+          ))) |>
+      rename(vtype1 = vehicle_type_code_1, vtype2 = vehicle_type_code_2)
 
-view(crashes)
-
-=======
-  )) |>
-  rename(factor1 = contributing_factor_vehicle_1, 
-         factor2 = contributing_factor_vehicle_2)
->>>>>>> Stashed changes
 ```
 
 # Exploratory Analysis
