@@ -1,0 +1,19 @@
+---
+title: "Insert title here"
+subtitle: "Insert subtitle here"
+execute: 
+  warning: false
+  execute: false
+---
+
+# Read Data/Libraries
+```{r}
+#| label: read-data-libs
+library(tidyverse)
+library(tidymodels)
+library(janitor)
+
+crashes <- read_csv("data/crashes_10k.csv")
+```
+
+# Methodology
