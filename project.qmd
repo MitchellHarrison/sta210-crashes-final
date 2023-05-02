@@ -6,7 +6,74 @@ execute:
   execute: false
 ---
 
+# Introduction
+
+## Dataset
+
+```{r}
+view(crashes)
+
+class(crashes$contributing_factor_vehicle_1)
+
+levels(crashes$contributing_factor_vehicle_1)
+
+levels(crashes$contributing_factor_vehicle_2)
+
+crashes %>%
+  filter(is.na(borough)) %>%
+  count()
+
+crashes %>%
+  filter(is.na(borough)) %>%
+  filter(!is.na(latitude)) %>%
+  count()
+
+crashes %>%
+  filter(number_of_persons_killed != 0) %>%
+  count()
+
+crashes %>%
+  filter(num_casualties > 1) %>%
+  count()
+
+crashes %>%
+  filter(num_casualties > 2) %>%
+  count()
+
+crashes %>%
+  filter(num_casualties > 3) %>%
+  count()
+
+crashes %>%
+  filter(num_casualties > 4) %>%
+  count()
+
+crashes %>%
+  filter(num_casualties > 5) %>%
+  count()
+
+crashes %>%
+  filter(num_casualties > 6) %>%
+  count()
+
+```
+
+Our dataset is composed of harvested and compiled data from New York City Police Department (NYPD) open access data on all police reported motor vehicle collisions (MVC) in all five boroughs of New York City from July 1st, 2012 through April 24th, 2023. The police report from which individual MVC observations in our dataset hail (MV104-AN) is required to be filled out for MVC where someone is injured or killed, or which result in at least \$1,000 of total property damage. Notably, only one MV104-AN form is filled out for all involved in an accident, meaning each observation in our dataset represents a unique MVC.
+
+The following are the variables of interest from our dataset:
+
+`crash_date`: the date on which the MVC occured.
+
+`crash_time`: the hour and minute (24-hr time) at which the MVC occured.
+
+`number_of_persons_injured`: The number of people who were injured in an individual MVC (not including people who were killed in the MVC).
+
+`number_of_persons_killed`: The number of people who were killed in an individual MVC.
+
+`crash_date`
+
 # Read Data/Libraries
+
 ```{r}
 #| label: import-libs
 library(tidyverse)
@@ -20,6 +87,7 @@ crashes <- read_csv("data/crashes_10k.csv")
 ```
 
 # Methodology
+
 - MCAR 
 - 2 or fewer vehicles only
 - response: person casualty (injured + killed)
@@ -30,7 +98,9 @@ crashes <- read_csv("data/crashes_10k.csv")
 5:9
 9:5
 
+
 # Data Wrangling
+
 ```{r}
 #| label: clean-data
 crashes <- crashes |>
@@ -84,7 +154,11 @@ crashes <- crashes |>
 ```
 
 # Exploratory Analysis
+<<<<<<< Updated upstream
 ## Time of Day
+=======
+
+>>>>>>> Stashed changes
 ```{r}
 #| label: viz-time-density
 crashes |>
