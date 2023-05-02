@@ -192,6 +192,40 @@ crashes <- crashes %>%
                   TRUE ~ "Other/Unknown"
                 )
   ))
+
+crashes <- crashes %>%
+  mutate(across(starts_with("vehicle_type_code"),
+                ~ case_when(
+                  . %in% c("2 dr sedan", "3-Door", "4 dr sedan", "4dsd",
+                        "Convertible", "Sedan", "SEDONA",
+                        "Station Wagon/Sport Utility Vehicle",
+                        "SPORT UTILITY / STATION WAGON", "LIMO",
+                        "LIVERY VEHICLE") ~ "Passenger vehicles",
+                  . %in% c("AMBU", "AMBUL", "Ambulance", "AMBULANCE",
+                        "AMBULETTE", "Armored Truck", "Beverage Truck",
+                        "Box Truck", "Bulk Agriculture", "Bus", "BUS",
+                        "Carry All", "Chassis Cab", "DELIV", "DELV",
+                        "Dump", "FDNY", "Fire", "FIRE TRUCK", "FIRETRUCK",
+                        "Flat Bed", "Flat Rack", "Garbage or Refuse",
+                        "Hopper", "SMALL COM VEH(4 TIRES)",
+                        "LARGE COM VEH(6 OR MORE TIRES)",
+                        "Mack Truck",
+                        "PICK-UP TRUCK", "PK", "Refrigerated Van", "schoo",
+                        "SCHOO", "Snow Plow", "Tow Truck",
+                        "Tow Truck / Wrecker", "TRACT",
+                        "Tractor Truck Diesel", "Tractor Truck Gasoline",
+                        "TRAIL", "TRAILER", "TRALI", "TRUCK",
+                        "USPS", "UTIL", "Van", "VAN",
+                        "VAN TRUCK") ~ "Commercial vehicles",
+                  . %in% c("MOTOR SCOO", "Motorcycle",
+                        "MOTORCYCLE", "Motorscooter", "SCOOTER", "Moped") ~ "Motorcycles",
+                  . %in% c("E-Bike", "BICYCLE", "Bike", "E-Scooter") ~ "Non-Motor Vehicle",
+                  . %in% c("FORK", "unk", "UNKNOWN", "OTHER") ~ "Other/Unknown",
+                  TRUE ~ "Other/Unknown"
+  )))
+
+view(crashes)
+
 ```
 
 # Exploratory Analysis
