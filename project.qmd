@@ -11,19 +11,34 @@ execute:
 
 ## Dataset
 
-Our dataset is composed of harvested and compiled data from New York City Police Department (NYPD) open access data on all police reported motor vehicle collisions (MVC) in all five boroughs of New York City from July 1st, 2012 through April 24th, 2023. The police report from which individual MVC observations in our dataset hail (MV104-AN) is required to be filled out for MVC where someone is injured or killed, or which result in at least \$1,000 of total property damage. Notably, only one MV104-AN form is filled out for all involved in an accident, meaning each observation in our dataset represents a unique MVC.
+Our dataset is composed of harvested and compiled data from New York City Police Department (NYPD) open access data on all police reported motor vehicle collisions (MVC) in all five boroughs of New York City from July 1st, 2012 through April 24th, 2023. The police report from which individual MVC observations in our dataset hail (MV104-AN) is required to be filled out for MVC where someone is injured or killed, or which result in at least $1,000 of total property damage. Notably, only one MV104-AN form is filled out for all involved in an accident, meaning each observation in our dataset represents a unique MVC.
 
-The following are the variables of interest from our dataset:
+Our initial dataset contained approximately 1.9 million observations (it can be found at https://www.kaggle.com/datasets/utkarshx27/motor-vehicle-collisions?resource=download). This was too large to import and examine in R, so we sampled 10,000 observations from the dataset completely at random (code shown in Methods). The original dataset, as well as our randomly sampled dataset, contained data on crashes involving 1 to 5 motorists, however, 93% of crashes in the dataset occurred between 2 or fewer motorists (98% between 3 or fewer and 100% between 4 or fewer). Due to high levels of missingness in crashes with 3 or more motorists, as well as their low real-world frequency in New York City (where the kind of highway pile-ups which generate MVC with 3 or more motorists aren’t generally observed), we decided to examine exclusively MVC between 2 or fewer motorists, which brought our total number of observations down to approximately 9,300.
+
+We created a number of new variables by manipulating the dataset, as well as recategorizing/cleaning some of the existing variables for practical use in modeling (for example, the original variables for factors contributing to the accident for each motorist and vehicle type of each motorist contained roughly 100 categories).
+
+The following are the variables of interest from our dataset, with new or recategorized variables noted:
 
 `crash_date`: the date on which the MVC occurred.
 
-`crash_time`: the hour and minute (24-hr time) at which the MVC occurred.
+`crash_day`: a categorical variable corresponding to the day of the week on which the MVC occurred, generated from the original `crash_date` variable.
 
-`number_of_persons_injured`: The number of people who were injured in an individual MVC (not including people who were killed in the MVC).
+`yday`: a numeric variable ranging from 1 to 365 corresponding to the numerical day of the year on which the MVC occurred.
 
-`number_of_persons_killed`: The number of people who were killed in an individual MVC.
+`crash_time` the time (in 24-hr time) at which the MVC occurred.
 
-`crash_date`
+`time_day`: a categorical variable with levels of “morning,” “afternoon,” “evening,” and “night” corresponding to the time of day at which a MVC occurred. This variable was generated from the `crash_time` variable, with “morning” from 5 AM to 12 PM, “afternoon” from 12 PM to 5 PM, “evening” from 5 PM to 9 PM, and “night” from 9 PM to 5 AM.
+
+`num_casualties`: a numeric variable corresponding to the number of casualties, i.e., injuries or fatalities, resulting from an MVC. This was generated from the original `number_of_persons_injured` and `number_of_persons_killed` variables.
+
+`has_casualty`: a binary variable corresponding to whether or not a MVC resulted in at least one casualty.
+
+`vtype1` and `vtype2`: categorical variables corresponding to the types of each vehicle (if applicable) involved in the crash, with categories of “Commercial vehicles,” “Passenger vehicles,” “Motorcycles,” “Non-Motor Vehicle,” and “Other/Unknown.”
+
+`factor1` and `factor2`: categorical variables corresponding any notable factors which were listed as potentially contributing to the crash (if applicable), with categories of “Aggressive/Reckless Driving,” “Distraction/Inattention/Fatigue,” “Failure to Obey Traffic Signs/Signals/Rules,” “Impaired,” “Other Technical/Mechanical Factors,” and “Other/Unknown.”
+
+Our primary research question of interest is whether an accident having casualties or not depends on the type(s) of 
+
 
 # Read Data/Libraries
 
@@ -81,7 +96,8 @@ crashes <- crashes |>
         "evening",
       hms(crash_time) > hm("21:00") | hms(crash_time) <= hm("5:00") ~
         "night"
-    ),
+    ) %>% 
+      factor(levels = c("morning", "afternoon", "evening", "night")),
     
     # add ordinal column for injuries v. fatalities
     has_injury = number_of_persons_injured > 0,
@@ -99,6 +115,10 @@ crashes <- crashes |>
     crash_day = weekdays(crash_date, abbreviate = F),
     yday = yday(crash_date)
   )
+
+    # make `crash_day` a factor rather than a character
+    crashes <- crashes %>%
+      mutate(crash_day = as.factor(crash_day))
 ```
 
 ```{r}
@@ -170,6 +190,13 @@ crashes <- crashes %>%
                   TRUE ~ "Other/Unknown"
           ))) |>
       rename(vtype1 = vehicle_type_code_1, vtype2 = vehicle_type_code_2)
+
+# make `factor1`, `factor2`, `vtype1`, and `vtype2`, factors rather than a characters
+    crashes <- crashes %>%
+      mutate(factor1 = as.factor(factor1),
+             factor2 = as.factor(factor2),
+             vtype1 = as.factor(vtype1),
+             vtype2 = as.factor(vtype2))
 
 view(crashes)
 
