@@ -1,6 +1,6 @@
 ---
-title: "Insert title here"
-subtitle: "Insert subtitle here"
+title: "Sta 210 Final Project"
+subtitle: "Drew LoPolito and Mitch Harrison"
 format: pdf
 execute: 
   warning: false
@@ -10,14 +10,8 @@ execute:
 # Introduction
 
 ## Dataset
-Our dataset is composed of harvested and compiled data from New York City Police
-Department (NYPD) open access data on all police reported motor vehicle
-collisions (MVC) in all five boroughs of New York City from July 1st, 2012
-through April 24th, 2023. The police report from which individual MVC
-observations in our dataset hail (MV104-AN) is required to be filled out for MVC
-where someone is injured or killed, or which result in at least \$1,000 of total
-property damage. Notably, only one MV104-AN form is filled out for all involved
-in an accident, meaning each observation in our dataset represents a unique MVC.
+
+Our dataset is composed of harvested and compiled data from New York City Police Department (NYPD) open access data on all police reported motor vehicle collisions (MVC) in all five boroughs of New York City from July 1st, 2012 through April 24th, 2023. The police report from which individual MVC observations in our dataset hail (MV104-AN) is required to be filled out for MVC where someone is injured or killed, or which result in at least \$1,000 of total property damage. Notably, only one MV104-AN form is filled out for all involved in an accident, meaning each observation in our dataset represents a unique MVC.
 
 The following are the variables of interest from our dataset:
 
@@ -25,15 +19,14 @@ The following are the variables of interest from our dataset:
 
 `crash_time`: the hour and minute (24-hr time) at which the MVC occurred.
 
-`number_of_persons_injured`: The number of people who were injured in an
-individual MVC (not including people who were killed in the MVC).
+`number_of_persons_injured`: The number of people who were injured in an individual MVC (not including people who were killed in the MVC).
 
-`number_of_persons_killed`: The number of people who were killed in an 
-individual MVC.
+`number_of_persons_killed`: The number of people who were killed in an individual MVC.
 
 `crash_date`
 
 # Read Data/Libraries
+
 ```{r}
 #| label: import-libs
 library(tidyverse)
@@ -46,20 +39,16 @@ library(lubridate)
 crashes <- read_csv("data/crashes_10k.csv")
 ```
 
-
 # Methodology
 
-- MCAR 
-- 2 or fewer vehicles only
-- response: person casualty (injured + killed)
-- removed rows with >2 vehicles
-- add column to track whether or not there are injuries/fatalities
-5:12
-12:5
-5:9
-9:5
+-   MCAR
+-   2 or fewer vehicles only
+-   response: person casualty (injured + killed)
+-   removed rows with \>2 vehicles
+-   add column to track whether or not there are injuries/fatalities 5:12 12:5 5:9 9:5
 
 # Data Wrangling
+
 ```{r}
 #| label: clean-data
 crashes <- crashes |>
@@ -182,6 +171,8 @@ crashes <- crashes %>%
           ))) |>
       rename(vtype1 = vehicle_type_code_1, vtype2 = vehicle_type_code_2)
 
+view(crashes)
+
 ```
 
 ```{r}
@@ -229,8 +220,11 @@ crashes %>%
   filter(num_casualties > 6) %>%
   count()
 ```
+
 # Exploratory Analysis
+
 ## Time of Day
+
 ```{r}
 #| label: viz-time-density
 crashes |>
@@ -266,16 +260,10 @@ crashes |>
   )
 ```
 
-Of accidents with one or more casualties, those happening on Saturdays and
-Sundays appear to occur disproportionately late at night and with a notably
-smaller peak around 5:00 pm. While there is variance around the weekend, the
-general pattern stays the same between all seven days. To account for this, we
-will introduce a random effect based on the days of the week to allow 
-information sharing between them. We anticipate that our model's performance 
-will benefit from such a change, and this random effect will end up in the 
-final model after performance evaluation.
+Of accidents with one or more casualties, those happening on Saturdays and Sundays appear to occur disproportionately late at night and with a notably smaller peak around 5:00 pm. While there is variance around the weekend, the general pattern stays the same between all seven days. To account for this, we will introduce a random effect based on the days of the week to allow information sharing between them. We anticipate that our model's performance will benefit from such a change, and this random effect will end up in the final model after performance evaluation.
 
 ## Day of the year
+
 ```{r}
 #| label: viz-density-severity-day-of-year
 crashes |>
@@ -296,13 +284,10 @@ crashes |>
   )
 ```
 
-The variance in density between levels of severity of accidents through all 
-years is relatively low. However, we see disproportionately severe accidents
-around the late summer/early spring months and minor accidents in the early
-winter months. We will include the day of the year in our initial model, but it
-may get cut during model evaluation.
+The variance in density between levels of severity of accidents through all years is relatively low. However, we see disproportionately severe accidents around the late summer/early spring months and minor accidents in the early winter months. We will include the day of the year in our initial model, but it may get cut during model evaluation.
 
 ## Borough
+
 ```{r}
 #| label: viz-hist-by-street
 crashes |>
@@ -322,13 +307,10 @@ crashes |>
   )
 ```
 
-We have far too many missing values to include borough in our model. If we could
-verify that borough was Missing Completely At Random (MCAR), we could include it
-in our complete-case model. Still, unfortunately, we are unable to verify the
-missingness mechanism and are therefore uncomfortable with possible performance
-impacts by using borough in our final model.
+We have far too many missing values to include borough in our model. If we could verify that borough was Missing Completely At Random (MCAR), we could include it in our complete-case model. Still, unfortunately, we are unable to verify the missingness mechanism and are therefore uncomfortable with possible performance impacts by using borough in our final model.
 
 # Model Construction
+
 ```{r}
 #| label: model-initial
 model1 <- glm(has_casualty ~ yday + time_day + factor1 + factor2 +
@@ -338,3 +320,7 @@ print(tidy(model1), n = 23)
 ```
 
 # Results
+
+# Discussion
+
+
