@@ -1,43 +1,85 @@
 ---
-title: "Sta 210 Final Project"
-subtitle: "Drew LoPolito and Mitch Harrison"
+title: "New York's Streetside Casualties"
+subtitle: "An explanatory analysis of NYC car accidents"
+author: "Drew LoPolito and Mitch Harrison"
 format: pdf
 execute: 
   warning: false
   execute: false
+  echo: false
 ---
 
 # Introduction
 
 ## Dataset
 
-Our dataset is composed of harvested and compiled data from New York City Police Department (NYPD) open access data on all police reported motor vehicle collisions (MVC) in all five boroughs of New York City from July 1st, 2012 through April 24th, 2023. The police report from which individual MVC observations in our dataset hail (MV104-AN) is required to be filled out for MVC where someone is injured or killed, or which result in at least $1,000 of total property damage. Notably, only one MV104-AN form is filled out for all involved in an accident, meaning each observation in our dataset represents a unique MVC.
+Our dataset is composed of harvested and compiled data from New York City Police
+Department (NYPD) open access data on all police reported motor vehicle
+collisions (MVC) in all five boroughs of New York City from July 1st, 2012
+through April 24th, 2023. The police report from which individual MVC
+observations in our dataset hail (MV104-AN) is required to be filled out for MVC
+where someone is injured or killed, or which result in at least $1,000 of total
+property damage. Notably, only one MV104-AN form is filled out for all involved
+in an accident, meaning each observation in our dataset represents a unique MVC.
 
-Our initial dataset contained approximately 1.9 million observations (it can be found at https://www.kaggle.com/datasets/utkarshx27/motor-vehicle-collisions?resource=download). This was too large to import and examine in R, so we sampled 10,000 observations from the dataset completely at random (code shown in Methods). The original dataset, as well as our randomly sampled dataset, contained data on crashes involving 1 to 5 motorists, however, 93% of crashes in the dataset occurred between 2 or fewer motorists (98% between 3 or fewer and 100% between 4 or fewer). Due to high levels of missingness in crashes with 3 or more motorists, as well as their low real-world frequency in New York City (where the kind of highway pile-ups which generate MVC with 3 or more motorists aren’t generally observed), we decided to examine exclusively MVC between 2 or fewer motorists, which brought our total number of observations down to approximately 9,300.
+Our initial dataset contained approximately 1.9 million observations, found
+[here](https://www.kaggle.com/datasets/utkarshx27/motor-vehicle-collisions?resource=download). 
+This was too large to push to git, so we sampled 10,000 observations from the
+dataset completely at random (code shown in Methods). The original dataset, as
+well as our randomly sampled dataset, contained data on crashes involving 1 to 5
+motorists, however, 93% of crashes in the dataset occurred between 2 or fewer
+motorists (98% between 3 or fewer and 100% between 4 or fewer). Due to high
+levels of missingness in crashes with 3 or more motorists, as well as their low
+real-world frequency in New York City (where the kind of highway pile-ups which
+generate MVC with 3 or more motorists aren’t generally observed), we decided to
+examine exclusively MVC between 2 or fewer motorists, which brought our total
+number of observations down to approximately 9,300.
 
-We created a number of new variables by manipulating the dataset, as well as recategorizing/cleaning some of the existing variables for practical use in modeling (for example, the original variables for factors contributing to the accident for each motorist and vehicle type of each motorist contained roughly 100 categories).
+We created a number of new variables by manipulating the dataset, as well as
+re-categorizing/cleaning some of the existing variables for practical use in
+modeling (for example, the original variables for factors contributing to the
+accident for each motorist and vehicle type of each motorist contained roughly
+100 categories).
 
-The following are the variables of interest from our dataset, with new or recategorized variables noted:
+The following are the variables of interest from our dataset, with new or
+re-categorized variables noted:
 
 `crash_date`: the date on which the MVC occurred.
 
-`crash_day`: a categorical variable corresponding to the day of the week on which the MVC occurred, generated from the original `crash_date` variable.
+`crash_day`: a categorical variable corresponding to the day of the week on 
+which the MVC occurred, generated from the original `crash_date` variable.
 
-`yday`: a numeric variable ranging from 1 to 365 corresponding to the numerical day of the year on which the MVC occurred.
+`yday`: a numeric variable ranging from 1 to 365 corresponding to the numerical
+day of the year on which the MVC occurred.
 
 `crash_time` the time (in 24-hr time) at which the MVC occurred.
 
-`time_day`: a categorical variable with levels of “morning,” “afternoon,” “evening,” and “night” corresponding to the time of day at which a MVC occurred. This variable was generated from the `crash_time` variable, with “morning” from 5 AM to 12 PM, “afternoon” from 12 PM to 5 PM, “evening” from 5 PM to 9 PM, and “night” from 9 PM to 5 AM.
+`time_day`: a categorical variable with levels of “morning,” “afternoon,”
+“evening,” and “night” corresponding to the time of day at which a MVC occurred.
+This variable was generated from the `crash_time` variable, with “morning” from 
+5 AM to 12 PM, “afternoon” from 12 PM to 5 PM, “evening” from 5 PM to 9 PM, and
+“night” from 9 PM to 5 AM.
 
-`num_casualties`: a numeric variable corresponding to the number of casualties, i.e., injuries or fatalities, resulting from an MVC. This was generated from the original `number_of_persons_injured` and `number_of_persons_killed` variables.
+`num_casualties`: a numeric variable corresponding to the number of casualties,
+i.e., injuries or fatalities, resulting from an MVC. This was generated from the
+original `number_of_persons_injured` and `number_of_persons_killed` variables.
 
-`has_casualty`: a binary variable corresponding to whether or not a MVC resulted in at least one casualty.
+`has_casualty`: a binary variable corresponding to whether or not a MVC resulted
+in at least one casualty.
 
-`vtype1` and `vtype2`: categorical variables corresponding to the types of each vehicle (if applicable) involved in the crash, with categories of “Commercial vehicles,” “Passenger vehicles,” “Motorcycles,” “Non-Motor Vehicle,” and “Other/Unknown.”
+`vtype1` and `vtype2`: categorical variables corresponding to the types of each
+vehicle (if applicable) involved in the crash, with categories of “Commercial
+vehicles,” “Passenger vehicles,” “Motorcycles,” “Non-Motor Vehicle,” and
+“Other/Unknown.”
 
-`factor1` and `factor2`: categorical variables corresponding any notable factors which were listed as potentially contributing to the crash (if applicable), with categories of “Aggressive/Reckless Driving,” “Distraction/Inattention/Fatigue,” “Failure to Obey Traffic Signs/Signals/Rules,” “Impaired,” “Other Technical/Mechanical Factors,” and “Other/Unknown.”
+`factor1` and `factor2`: categorical variables corresponding any notable factors
+which were listed as potentially contributing to the crash (if applicable), with
+categories of “Aggressive/Reckless Driving,” “Distraction/Inattention/Fatigue,”
+“Failure to Obey Traffic Signs/Signals/Rules,” “Impaired,” “Other
+Technical/Mechanical Factors,” and “Other/Unknown.”
 
-Our primary research question of interest is whether an accident having casualties or not depends on the type(s) of 
+Our primary research question of interest is whether an accident having
+casualties or not depends on the type(s) of 
 
 
 # Read Data/Libraries
@@ -60,7 +102,7 @@ crashes <- read_csv("data/crashes_10k.csv")
 -   2 or fewer vehicles only
 -   response: person casualty (injured + killed)
 -   removed rows with \>2 vehicles
--   add column to track whether or not there are injuries/fatalities 5:12 12:5 5:9 9:5
+-   add column to track whether or not there are injuries/fatalities 
 
 # Data Wrangling
 
@@ -251,7 +293,6 @@ crashes %>%
 # Exploratory Analysis
 
 ## Time of Day
-
 ```{r}
 #| label: viz-time-density
 crashes |>
@@ -287,7 +328,14 @@ crashes |>
   )
 ```
 
-Of accidents with one or more casualties, those happening on Saturdays and Sundays appear to occur disproportionately late at night and with a notably smaller peak around 5:00 pm. While there is variance around the weekend, the general pattern stays the same between all seven days. To account for this, we will introduce a random effect based on the days of the week to allow information sharing between them. We anticipate that our model's performance will benefit from such a change, and this random effect will end up in the final model after performance evaluation.
+Of accidents with one or more casualties, those happening on Saturdays and
+Sundays appear to occur disproportionately late at night and with a notably
+smaller peak around 5:00 pm. While there is variance around the weekend, the
+general pattern stays the same between all seven days. To account for this, we
+will introduce a random effect based on the days of the week to allow 
+information sharing between them. We anticipate that our model's performance 
+will benefit from such a change, and this random effect will end up in the 
+final model after performance evaluation.
 
 ## Day of the year
 
@@ -311,7 +359,11 @@ crashes |>
   )
 ```
 
-The variance in density between levels of severity of accidents through all years is relatively low. However, we see disproportionately severe accidents around the late summer/early spring months and minor accidents in the early winter months. We will include the day of the year in our initial model, but it may get cut during model evaluation.
+The variance in density between levels of severity of accidents through all 
+years is relatively low. However, we see disproportionately severe accidents
+around the late summer/early spring months and minor accidents in the early
+winter months. This difference is enough to include it as a potential predictor
+of interest in our final model.
 
 ## Borough
 
@@ -334,14 +386,46 @@ crashes |>
   )
 ```
 
-We have far too many missing values to include borough in our model. If we could verify that borough was Missing Completely At Random (MCAR), we could include it in our complete-case model. Still, unfortunately, we are unable to verify the missingness mechanism and are therefore uncomfortable with possible performance impacts by using borough in our final model.
+We have far too many missing values to include borough in our model. If we could
+verify that borough was Missing Completely At Random (MCAR), we could include it
+in our complete-case model. Still, unfortunately, we are unable to verify the
+missingness mechanism and are therefore uncomfortable with possible performance
+impacts by using borough in our final model.
+
+## Zip codes
+```{r}
+#| label: viz-zip-code-box
+crashes |>
+  group_by(zip_code) |>
+  summarise(count = n(), casualties = sum(has_casualty)) |>
+  mutate(prop = casualties / count) |>
+  ggplot(aes(x = prop)) +
+  geom_vline(xintercept = 0.1905, linetype = 3) +
+  annotate("text", label = "Median = 0.191", x = 0.2, y = 0.8, color = "gray",
+           fontface = "bold", hjust = "left") +
+  geom_boxplot(varwidth = T, fill = "red", alpha = 0.5) +
+  ylim(-1,1) +
+  labs(
+    x = "Proportion of accidents with casualties",
+    y = NULL,
+    title = "Zip Code casualty rates are approximately normal",
+    subtitle = "Distribution of NYC car accident casualty rates by zip code"
+  ) +
+  theme_classic() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.line.y = element_blank()
+  )
+```
+
+## Streets
 
 # Model Construction
-
 ```{r}
 #| label: model-initial
-model1 <- glm(has_casualty ~ yday + time_day + factor1 + factor2 +
-                vtype1 + vtype2, 
+model1 <- glm(has_casualty ~ yday + time_day + + crash_day +
+                factor1 + factor2 + vtype1 + vtype2, 
               data = crashes, family = "binomial")
 print(tidy(model1), n = 23)
 ```
@@ -349,5 +433,3 @@ print(tidy(model1), n = 23)
 # Results
 
 # Discussion
-
-
