@@ -73,7 +73,7 @@ crashes <- read_csv("data/crashes_10k.csv")
 
 Notably, only one MV104-AN form is filled out for all involved in an accident, meaning each observation in our dataset represents a unique MVC.
 
-Our initial dataset contained approximately 1.9 million observations, found [here](https://www.kaggle.com/datasets/utkarshx27/motor-vehicle-collisions?resource=download). This was too large to push to git, so we sampled 10,000 observations from the dataset completely at random (code shown in Appendix: Data Cleaning). The original dataset, as well as our randomly sampled dataset, contained data on crashes involving 1 to 5 motorists. However, 93% of crashes in the dataset occurred between 2 or fewer motorists (98% between 3 or fewer and 100% between 4 or fewer). Due to high levels of missingness in crashes with 3 or more motorists, as well as their low real-world frequency in New York City (where the kind of highway pile-ups which generate MVC with 3 or more motorists aren't generally observed), we decided to examine exclusively MVC between 2 or fewer motorists by removing all observations involving more than two vehicles, which brought our total number of observations down to approximately 9,300.
+Our initial dataset contained approximately 1.9 million observations, found [here](https://www.kaggle.com/datasets/utkarshx27/motor-vehicle-collisions?resource=download). This was too large to push to git, so we sampled 10,000 observations from the dataset completely at random (**Appendix 1a**). The original dataset, as well as our randomly sampled dataset, contained data on crashes involving 1 to 5 motorists. However, 93% of crashes in the dataset occurred between 2 or fewer motorists (98% between 3 or fewer and 100% between 4 or fewer). Due to high levels of missingness in crashes with 3 or more motorists, as well as their low real-world frequency in New York City (where the kind of highway pile-ups which generate MVC with 3 or more motorists aren't generally observed), we decided to examine exclusively MVC between 2 or fewer motorists by removing all observations involving more than two vehicles, which brought our total number of observations down to approximately 9,300.
 
 Next, we used the original counts of persons killed and persons injured to create a count of casualties, `num_casualties`, (defined as injuries **and** casualties). We then created binary variables for MVC injury, fatality, and casualty, the last of which, `has_casualty`, is our response variable of interest. We used these three variables to create a ordinal category of accident severity, with levels of "no casualties," "injury," and "fatal."
 
@@ -331,50 +331,64 @@ The explanatory data analysis helps the reader better understand the observation
 
 ***Our primary research concern is determining which characteristics of a MVC's timing and participants involved make casualties more likely.***
 
-```{r}
-#| label: viz-hist-by-street
-crashes |>
-  group_by(vtype1) |>
-  summarise(count = n()) |>
-  mutate(color = if_else(is.na(borough), "red", "lightgray")) |>
-  ggplot(aes(x = vtype1, y = count, fill = color)) +
-  geom_col() +
-  scale_fill_identity() +
-  theme_classic() +
-  labs(
-    x = NULL,
-    y = "",
-    title = "\"Missing\" is the biggest borough in NYC",
-    subtitle = paste("Missingness of borough variable is too great to include",
-                     "in the model")
-  )
+**Below I was trying to make charts of the casualty proportions of accidents by vehicle types 1 and 2. The gist is clear, but if you could clean them up a bit to make them look good that would be awesome.**
 
-color_cas <- crashes %>%
-  mutate(color_cas = if_else(vtype1 %in% c("Motorcycles", "Non-Motor Vehicle"),
-                             "red", "lightgray"))
+We can see from the visualizations below that vehicle type seems to have a significant impact on MVC casualty rate, particularly with regard to motorcycles and non-motor vehicles.
+
+```{r}
+#| label: viz-prop-casualties-by-vtype1-and-vtype2
+
+# vtype1
+crashes %>%
+  filter(vtype1 != "Other/Unknown") %>%
+  ggplot(aes(x = vtype1, fill = has_casualty)) +
+  geom_bar(position = "fill", color = "black") + 
+  scale_fill_manual(values = c("blue", "red"), labels = c("No", "Yes")) +
+  labs(x = "Vehicle Type", y = "Casualty Rate", fill = "Casualty", title = "Casualties Occur More Frequently in Accidents
+with Motorcycles or Non-Motor Vehicles", subtitle = "MVCs with Casualties based on Vehicle Type 1")
+
+# vtype2
+crashes %>%
+  filter(vtype2 != "None" & vtype2 != "Other/Unknown") %>%
+  ggplot(aes(x = vtype2, fill = has_casualty)) +
+  geom_bar(position = "fill", color = "black") + 
+  scale_fill_manual(values = c("blue", "red"), labels = c("No", "Yes")) +
+  labs(x = "Vehicle Type", y = "Casualty Rate", fill = "Casualty", title = "Casualties Occur More Frequently in Accidents
+with Motorcycles or Non-Motor Vehicles", subtitle = "MVCs with Casualties based on Vehicle Type 2")
+
+```
+
+**Same here, I was trying to make charts of the casualty proportions of accidents by `factor1` and `factor2`. The gist is clear, but if you could clean them up a bit, *particularly the x-axis labels*, to make them look good that would be awesome.**
+
+The visualizations below do not seem to show any one driver related error or issue having a remarkable impact on casualty rates as compared to any others.
+
+```{r}
+#| label: viz-prop-casualties-by-factor1-and-factor
+
+# factor1
+crashes %>%
+  filter(factor1 != "Other/Unknown") %>%
+  ggplot(aes(x = factor1, fill = has_casualty)) +
+  geom_bar(position = "fill", color = "black") + 
+  scale_fill_manual(values = c("blue", "red"), labels = c("No", "Yes")) +
+  labs(x = "Factor Type", y = "Casualty Rate", fill = "Casualty", title = "No Clearly More Dangerous Driver Factor", subtitle = "MVCs with Casualties based on Factor Type 1")
+
+# factor2
+crashes %>%
+  filter(factor2 != "Other/Unknown") %>%
+  ggplot(aes(x = factor2, fill = has_casualty)) +
+  geom_bar(position = "fill", color = "black") + 
+  scale_fill_manual(values = c("blue", "red"), labels = c("No", "Yes")) +
+  labs(x = "Factor Type", y = "Casualty Rate", fill = "Casualty", title = "No Clearly More Dangerous Driver Factor", subtitle = "MVCs with Casualties based on Factor Type 2")
+```
+
+To explore how timing might effect the occurrence of casualties, we explored the relationship between day of the week and casualty occurrence, finding that weekend MVC casualties were more heavily concentrated in the early morning hours than weekday MVC casualties. This was interesting as it provided some credence to the intuitive
+
+```{r}
 
 crashes %>%
-  group_by(vtype1) %>%
-  summarise(casualty_prop = sum(has_casualty == TRUE) / n()) %>%
-  ggplot(aes(x = vtype1, y = casualty_prop, fill = color_cas)) +
-  geom_col() +
-  labs(x = "Vehicle Type 1", y = "Casualty Rate", fill = "Casualty", 
-       title = "Casualties Occur More Frequently in Accidents")
-
-ggplot(data = crashes, aes(x = vtype1, fill = has_casualty)) +
-  geom_bar(position = "fill", color = "black") + 
-  scale_fill_manual(values = c(alpha("blue", 0), "red"), labels = c("No", "Yes")) +
-  labs(x = "Vehicle Type 1", y = "Casualty Rate", fill = "Casualty", title = "Casualties Occur More Frequently in Accidents")
-
-ggplot(data = crashes, aes(x = vtype1, fill = has_casualty)) +
-  geom_bar(position = "fill", color = "black") + 
-  scale_fill_manual(values = c(alpha("blue", 0), "red"), labels = c("No", "Yes")) +
-  labs(x = "Vehicle Type 1", y = "Casualty Rate", fill = "Casualty", title = "Casualties Occur More Frequently in Accidents")
-
-ggplot(data = crashes, aes(x = vtype2, fill = has_casualty)) +
-  geom_bar(position = "fill", color = "black") + 
-  scale_fill_manual(values = c(alpha("blue", 0), "red"), labels = c("No", "Yes")) +
-  labs(x = "Vehicle Type 2", y = "Casualty Rate", fill = "Casualty", title = "Casualties Occur More Frequently in Accidents")
+  group_by(weekend_weekday) %>%
+  (count(factor1 == "Impairment/Distraction/Fatigue"))/count(nrow(crashes))
 
 ```
 
@@ -415,6 +429,42 @@ crashes |>
 ```
 
 ```{r}
+#| label: viz-time-density-with-weekend_weekday
+#| fig-width: 7
+crashes |>
+  filter(num_casualties > 0) |>
+  mutate(color = if_else(weekend_weekday == "Weekend", 
+         "red", "gray")) |>
+  ggplot(aes(x = crash_time, group = weekend_weekday)) +
+  geom_density(color = "lightgray") +
+  geom_density(
+    data = filter(crashes, num_casualties > 0, 
+                  weekend_weekday == "Weekend"), 
+    color = "red"
+  ) +
+  geom_vline(xintercept = hm("9:00"), linetype = 3) +
+  geom_vline(xintercept = hm("17:00"), linetype = 3) +
+  annotate("text", label = "9:00 am", color = "gray", angle = 90,
+           x = hm("10:00"), y = 5e-06, hjust = "right", vjust = "bottom") +
+  annotate("text", label = "5:00 pm", color = "gray", angle = 90,
+           x = hm("16:30"), y = 5e-06, hjust = "right", vjust = "bottom") +
+  annotate("text", color = "red", label = "Weekend", x = hm("00:20"), 
+           hjust = "left", fontface = "bold", y = 8e-06) +
+  annotate("text", color = "gray", label = "Weekday", x = hm("00:20"), 
+           hjust = "left", fontface = "bold", y = 1e-06) +
+  scale_color_identity() +
+  theme_classic() +
+  labs(
+    x = "Time of crash",
+    y = "Density",
+    title = "Weekend casualties are disproportionately in the early morning",
+    subtitle = paste("Time density of NYC car accidents with injuries or",
+                     "fatalities by Weekend or Weekday"),
+    color = "Weekend or Weekday"
+  )
+```
+
+```{r}
 #| label: viz-density-severity-day-of-year
 #| fig-height: 3
 crashes |>
@@ -435,55 +485,7 @@ crashes |>
   )
 ```
 
-```{r}
-#| label: viz-hist-by-street
-crashes |>
-  group_by(borough) |>
-  summarise(count = n()) |>
-  mutate(color = if_else(is.na(borough), "red", "lightgray")) |>
-  ggplot(aes(x = borough, y = count, fill = color)) +
-  geom_col() +
-  scale_fill_identity() +
-  theme_classic() +
-  labs(
-    x = NULL,
-    y = "Count",
-    title = "\"Missing\" is the biggest borough in NYC",
-    subtitle = paste("Missingness of borough variable is too great to include",
-                     "in the model")
-  )
-```
-
-```{r}
-#| label: viz-zip-code-box
-#| fig-height: 2
-zip_crash <- crashes |>
-  group_by(zip_code) |>
-  summarise(count = n(), casualties = sum(has_casualty)) |>
-  mutate(prop = casualties / count)
-
-zip_med <- median(zip_crash$prop)
-
-zip_crash |>
-  ggplot(aes(x = prop)) +
-  geom_vline(xintercept = zip_med, linetype = 3) +
-  annotate("text", label = "Median = 0.186", x = 0.2, y = 0.8, color = "gray",
-           fontface = "bold", hjust = "left") +
-  geom_boxplot(varwidth = T, fill = "red", alpha = 0.5) +
-  ylim(-1,1) +
-  labs(
-    x = "Proportion of accidents with casualties",
-    y = NULL,
-    title = "Zip Code casualty rates are approximately normal",
-    subtitle = "Distribution of NYC car accident casualty rates by zip code"
-  ) +
-  theme_classic() +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    axis.line.y = element_blank()
-  )
-```
+Further analysis was done to explore whether zip code seemed to impact casualty rates (**Appendix 2a**), but this only revealed that these rates were approximately normally distributed. We also visualized MVC count by borough (**Appendix 2b**), seeing no significant trend other than high missingness for `borough` data.
 
 ```{r}
 #| label: viz-streets-hist
@@ -598,9 +600,9 @@ Overall conclusions from analysis are clearly described, and the model results a
 
 # Appendix
 
-## Data Cleaning
+## 1. Data Cleaning
 
-#### Sample code for sampling/exportation of large original dataset
+#### a) Sample code for sampling/exportation of large original dataset
 
 ```{r}
 
@@ -609,3 +611,61 @@ crashes <- sample_n(crashes_original, 10000)
 write_csv(crashes, <"crashes">)
 
 ```
+
+## 2. Exploratory Data Analysis
+
+#### a) Visualization of Casualty Rates by Zip Code
+
+```{r}
+#| label: viz-zip-code-box
+#| fig-height: 2
+zip_crash <- crashes |>
+  group_by(zip_code) |>
+  summarise(count = n(), casualties = sum(has_casualty)) |>
+  mutate(prop = casualties / count)
+
+zip_med <- median(zip_crash$prop)
+
+zip_crash |>
+  ggplot(aes(x = prop)) +
+  geom_vline(xintercept = zip_med, linetype = 3) +
+  annotate("text", label = "Median = 0.186", x = 0.2, y = 0.8, color = "gray",
+           fontface = "bold", hjust = "left") +
+  geom_boxplot(varwidth = T, fill = "red", alpha = 0.5) +
+  ylim(-1,1) +
+  labs(
+    x = "Proportion of accidents with casualties",
+    y = NULL,
+    title = "Zip Code casualty rates are approximately normal",
+    subtitle = "Distribution of NYC car accident casualty rates by zip code"
+  ) +
+  theme_classic() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.line.y = element_blank()
+  )
+```
+
+#### b) Visualization of MVC by Borough
+
+```{r}
+#| label: viz-hist-by-street
+crashes |>
+  group_by(borough) |>
+  summarise(count = n()) |>
+  mutate(color = if_else(is.na(borough), "red", "lightgray")) |>
+  ggplot(aes(x = borough, y = count, fill = color)) +
+  geom_col() +
+  scale_fill_identity() +
+  theme_classic() +
+  labs(
+    x = NULL,
+    y = "Count",
+    title = "\"Missing\" is the biggest borough in NYC",
+    subtitle = paste("Missingness of borough variable is too great to include",
+                     "in the model")
+  )
+```
+
+#### c.
