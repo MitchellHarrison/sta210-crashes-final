@@ -2,9 +2,7 @@
 title: "New York's Streetside Casualties"
 subtitle: "An explanatory analysis of NYC car accidents"
 author: "Drew LoPolito and Mitch Harrison"
-format: 
-  pdf:
-    keep-tex: true
+format: pdf
 execute: 
   warning: false
   execute: false
@@ -12,23 +10,6 @@ execute:
 ---
 
 # Introduction
-
-## Instructions:
-
-This section includes an introduction to the project motivation, data, and research question. Describe the data and definitions of key variables. It should also include some exploratory data analysis. All of the EDA won't fit in the paper, so focus on the EDA for the response variable and a few other interesting variables and relationships.
-
-### Grading Criteria
-
-The research question and motivation are clearly stated in the introduction, including citations for the data source and any external research.
-
-The data are clearly described, including a description about how the data were originally collected and a concise definition of the variables relevant to understanding the report.
-
-The data cleaning process is clearly described, including any decisions made in the process (e.g., creating new variables, removing observations, etc.)
-
-The explanatory data analysis helps the reader better understand the observations in the data along with interesting and relevant relationships between the variables. It incorporates appropriate visualizations and summary statistics.
-
-## What we have:
-
 ## Project Motivation
 
 **Insert a blurb using a few citations about why this project was important.**
@@ -66,7 +47,6 @@ library(gt)
 ```{r}
 #| label: read-data
 crashes <- read_csv("data/crashes_10k.csv")
-
 ```
 
 ## Data Cleaning
@@ -134,10 +114,11 @@ crashes <- crashes |>
     weekend_weekday = as.factor(weekend_weekday)
 
   )
+```
 
-
-view(crashes)
-
+```{r}
+#| label: quick-eda
+#| include: false
 # Count the number of levels in vehicle_type_code_1
 nlevels_vehicle_type_code_1 <- length(levels(factor(crashes$vehicle_type_code_1)))
 cat("Number of levels in vehicle_type_code_1:", nlevels_vehicle_type_code_1, "\n")
@@ -188,7 +169,6 @@ crashes %>%
 (crashes %>%
   filter(is.na(vehicle_type_code_1)) %>%
   count())/(nrow(crashes))
-  
 ```
 
 Next, we cleaned the original variables corresponding to vehicle types, `vehicle_type_code_(1 or 2)`, involved in the accident as well as factors in each vehicle which may have contributed to the MVC, `contributing_factor_vehicle_(1 or 2)`. 453 MVCs contained an observation for `contributing_factor_vehicle_2` but were NA for `vehicle_type_code_2`, which we believe indicated not that there wasn't a second vehicle but that the vehicle type hadn't been recorded, so we replaced the `vehicle_type_code_2` NAs by indicating that it was simply unknown. Additionally, 59 MVCs had missing observations for `vehicle_type_code_1`, which we removed since each MVC must involve at least one vehicle and this represented only 0.638% of the dataset.
@@ -316,18 +296,11 @@ crashes <- crashes %>%
          factor2 = as.factor(factor2),
          vtype1 = as.factor(vtype1),
          vtype2 = as.factor(vtype2))
-
-levels(crashes$factor1)
-levels(crashes$factor2)
-levels(crashes$vtype1)
-levels(crashes$vtype2)
 ```
 
 ## Exploratory Analysis
 
 The explanatory data analysis helps the reader better understand the observations in the data along with interesting and relevant relationships between the variables. It incorporates appropriate visualizations and summary statistics.
-
-**Below I was trying to make charts of the casualty proportions of accidents by vehicle types 1 and 2. The gist is clear, but if you could clean them up a bit to make them look good that would be awesome.**
 
 We can see from the visualizations below that vehicle type seems to have a significant impact on MVC casualty rate, particularly with regard to motorcycles and non-motor vehicles.
 
@@ -349,8 +322,6 @@ crashes %>%
     subtitle = "Casualty rate of MVCs in New York by vehicle involved"
   )
 ```
-
-**Same here, I was trying to make charts of the casualty proportions of accidents by `factor1` and `factor2`. The gist is clear, but if you could clean them up a bit, *particularly the x-axis labels*, to make them look good that would be awesome.**
 
 The visualizations below do not seem to show any one driver related error or issue having a remarkable impact on casualty rates as compared to any others.
 
@@ -388,8 +359,6 @@ To explore how timing might effect the occurrence of casualties, we explored the
   filter(weekend_weekday == "Weekday" & crash_time %in% c(00:00, 04:00)) %>%
   count())
 ```
-
-**I made another density plot using your code but with the `weekend_weekday` variable instead of individual days for this, we can use whichever but it seems a bit clearer with the latter in my opinion. See below:**
 
 ```{r}
 #| label: viz-time-density-with-weekend_weekday
@@ -451,10 +420,6 @@ crashes |>
 ```
 
 Further analysis was done to explore whether zip code seemed to impact casualty rates (**Appendix 2a**), but this only revealed that these rates were approximately normally distributed. We also visualized MVC count by borough (**Appendix 2b**), seeing no significant trend other than high missingness for `borough` data.
-
-Lastly, we visualized the number of streets with
-
-**I dont think we need this plot below. To be honest, it shows that something like 300 streets have casualty rates around 0.5, which is pretty high and probably would indicate that we should include street somehow as a predictor...**
 
 # Methodology
 
