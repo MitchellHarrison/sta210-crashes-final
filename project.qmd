@@ -29,31 +29,44 @@ Our dataset is composed of harvested and compiled data from New York City Police
 
 Our initial dataset contained approximately 1.9 million observations, found [here](https://www.kaggle.com/datasets/utkarshx27/motor-vehicle-collisions?resource=download). This was too large to push to git, so we sampled 10,000 observations from the dataset completely at random (code shown in Methods). The original dataset, as well as our randomly sampled dataset, contained data on crashes involving 1 to 5 motorists, however, 93% of crashes in the dataset occurred between 2 or fewer motorists (98% between 3 or fewer and 100% between 4 or fewer). Due to high levels of missingness in crashes with 3 or more motorists, as well as their low real-world frequency in New York City (where the kind of highway pile-ups which generate MVC with 3 or more motorists aren't generally observed), we decided to examine exclusively MVC between 2 or fewer motorists, which brought our total number of observations down to approximately 9,300.
 
-We created a number of new variables by manipulating the dataset, as well as re-categorizing/cleaning some of the existing variables for practical use in modeling (for example, the original variables for factors contributing to the accident for each motorist and vehicle type of each motorist contained roughly 100 categories).
+We created a number of new variables by manipulating the dataset, as well as
+re-categorizing/cleaning some of the existing variables for practical use in
+modeling (for example, the original variables for factors contributing to the
+accident for each motorist and vehicle type of each motorist contained roughly
+100 categories).
 
-The following are the variables of interest from our dataset, with new or re-categorized variables noted:
+The following are the variables of interest from our dataset, with new or
+re-categorized variables noted:
 
-`crash_date`: the date on which the MVC occurred.
+`has_casualty`: a binary variable corresponding to whether or not a MVC resulted
+in at least one casualty.
 
-`crash_day`: a categorical variable corresponding to the day of the week on which the MVC occurred, generated from the original `crash_date` variable.
+`weekend_weekday`: a binary variable corresponding to whether a MVC occurred
+during the weekend or the w
 
-`weekend_weekday`: a binary variable corresponding to whether a MVC occurred during the weekend or the w
+`yday`: a numeric variable ranging from 1 to 365 corresponding to the numerical
+day of the year on which the MVC occurred.
 
-`yday`: a numeric variable ranging from 1 to 365 corresponding to the numerical day of the year on which the MVC occurred.
+`time_day`: a categorical variable with levels of "morning," "afternoon,"
+"evening," and "night" corresponding to the time of day at which a MVC occurred.
+This variable was generated from the `crash_time` variable, with "morning" from 
+5 AM to 12 PM, "afternoon" from 12 PM to 5 PM, "evening" from 5 PM to 9 PM, and
+"night" from 9 PM to 5 AM.
 
-`crash_time` the time (in 24-hr time) at which the MVC occurred.
+`vtype1` and `vtype2`: categorical variables corresponding to the types of each
+vehicle (if applicable) involved in the crash, with categories of "Commercial
+vehicles," "Passenger vehicles," "Motorcycles," "Non-Motor Vehicle," and
+"Other/Unknown."
 
-`time_day`: a categorical variable with levels of "morning," "afternoon," "evening," and "night" corresponding to the time of day at which a MVC occurred. This variable was generated from the `crash_time` variable, with "morning" from 5 AM to 12 PM, "afternoon" from 12 PM to 5 PM, "evening" from 5 PM to 9 PM, and "night" from 9 PM to 5 AM.
+`factor1` and `factor2`: categorical variables corresponding any notable factors
+which were listed as potentially contributing to the crash (if applicable), with
+categories of "Aggressive/Reckless Driving," "Distraction/Inattention/Fatigue,"
+"Failure to Obey Traffic Signs/Signals/Rules," "Impaired," "Other
+Technical/Mechanical Factors," and "Other/Unknown."
 
-`num_casualties`: a numeric variable corresponding to the number of casualties, i.e., injuries or fatalities, resulting from an MVC. This was generated from the original `number_of_persons_injured` and `number_of_persons_killed` variables.
-
-`has_casualty`: a binary variable corresponding to whether or not a MVC resulted in at least one casualty.
-
-`vtype1` and `vtype2`: categorical variables corresponding to the types of each vehicle (if applicable) involved in the crash, with categories of "Commercial vehicles," "Passenger vehicles," "Motorcycles," "Non-Motor Vehicle," and "Other/Unknown."
-
-`factor1` and `factor2`: categorical variables corresponding any notable factors which were listed as potentially contributing to the crash (if applicable), with categories of "Aggressive/Reckless Driving," "Distraction/Inattention/Fatigue," "Failure to Obey Traffic Signs/Signals/Rules," "Impaired," "Other Technical/Mechanical Factors," and "Other/Unknown."
-
-**Our primary research concern is determining which characteristics of the timing and participants involved make a motor vehicle collision (MVC) more likely to involve casualties.**
+**Our primary research concern is determining which characteristics of the** 
+**timing and participants involved make a motor vehicle collision (MVC) more**
+**likely to involve casualties.**
 
 ## Read Data/Libraries
 
@@ -315,7 +328,6 @@ crashes <- crashes %>%
 
 ## Exploratory Analysis
 
-### Time of Day
 ```{r}
 #| label: viz-time-density
 #| fig-width: 7
@@ -352,9 +364,6 @@ crashes |>
   )
 ```
 
-Of accidents with one or more casualties, those happening on Saturdays and Sundays appear to occur disproportionately late at night and with a notably smaller peak around 5:00 pm. While there is variance around the weekend, the general pattern stays the same between all seven days. To account for this, we will introduce a random effect based on the days of the week to allow information sharing between them. We anticipate that our model's performance will benefit from such a change, and this random effect will end up in the final model after performance evaluation.
-
-### Day of the year
 ```{r}
 #| label: viz-density-severity-day-of-year
 #| fig-height: 3
@@ -376,10 +385,6 @@ crashes |>
   )
 ```
 
-The variance in density between levels of severity of accidents through all years is relatively low. However, we see disproportionately severe accidents around the late summer/early spring months and minor accidents in the early winter months. This difference is enough to include it as a potential predictor of interest in our final model.
-
-### Borough
-
 ```{r}
 #| label: viz-hist-by-street
 #| include: false
@@ -399,10 +404,6 @@ crashes |>
                      "in the model")
   )
 ```
-
-We have far too many missing values to include borough in our model. If we could verify that borough was Missing Completely At Random (MCAR), we could include it in our complete-case model. Still, unfortunately, we are unable to verify the missingness mechanism and are therefore uncomfortable with possible performance impacts by using borough in our final model.
-
-### Zip codes
 
 ```{r}
 #| label: viz-zip-code-box
@@ -434,14 +435,6 @@ zip_crash |>
     axis.line.y = element_blank()
   )
 ```
-Building a box plot to observe the distribution of accident proportion by zip
-code, we see that casualty rates are approximately normally distributed about a
-median of 0.186. Because of the large absolute number of zip codes in the 
-dataset and the unlikely impact of a normally distributed proportion having a
-significant impact on the model, we will not use zip code as a predictor in the
-final model.
-
-### Streets
 
 ```{r}
 #| label: viz-streets-hist
@@ -464,12 +457,7 @@ crashes |>
   )
 ```
 
-After applying LaPlace succession, we see that the vast majority of accidents had no casualties, and most others were distributed around 0.25, with another peak around 0.5, partially due to the mathematical consequences of LaPlace succession. Because so many streets followed an unremarkable distribution and because adding street as a predictor would introduce massive model complexity, we will not use the street on which an accident occurs as a predictor in the final model.
-
-# Methodology
-
 ## Instructions:
-
 This section includes a brief description of your modeling process. Explain the reasoning for the type of model you're fitting, predictor variables considered for the model including any interactions. Additionally, show how you arrived at the final model by describing the model selection process, interactions considered, variable transformations (if needed), assessment of conditions and diagnostics, and any other relevant considerations that were part of the model fitting process.
 
 ### Grading criteria
