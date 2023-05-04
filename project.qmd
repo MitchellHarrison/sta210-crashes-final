@@ -177,14 +177,6 @@ crashes <- crashes |>
     # add combined casualty column (injuries + fatalities)
     num_casualties = number_of_persons_killed + number_of_persons_injured,
     
-    # create factors
-    contributing_factor_vehicle_1 = as.factor(contributing_factor_vehicle_1),
-    contributing_factor_vehicle_2 = as.factor(contributing_factor_vehicle_2),
-    vehicle_type_code_1 = as.factor(vehicle_type_code_1),
-    vehicle_type_code_2 = as.factor(vehicle_type_code_2),
-    zip_code = as.factor(zip_code),
-    borough = as.factor(borough),
-    
     # add time of day categories
     time_day = case_when(
       hms(crash_time) > hm("5:00") & hms(crash_time) <= hm("12:00") ~
@@ -212,12 +204,19 @@ crashes <- crashes |>
     # add Julian date column
     crash_date = as.Date(crash_date, format = "%m/%d/%Y"),
     crash_day = weekdays(crash_date, abbreviate = F),
-    yday = yday(crash_date)
+    yday = yday(crash_date),
+    
+    # add column for weekend or weekday
+    weekend_weekday = if_else(crash_day %in% c("Saturday", "Sunday"), "Weekend", "Weekday"),
+    
+    # make `crash_day` a factor rather than a character
+    crash_day = as.factor(crash_day),
+    
+    # make `weekend_weekday` a factor rather than a character
+    weekend_weekday = as.factor(weekend_weekday)
+
   )
 
-    # make `crash_day` a factor rather than a character
-    crashes <- crashes %>%
-      mutate(crash_day = as.factor(crash_day))
 ```
 
 ```{r}
@@ -265,7 +264,7 @@ crashes <- crashes %>%
          factor2 = contributing_factor_vehicle_2)
 
 crashes <- crashes %>%
-  mutate(across(starts_with("vehicle_type_code"),
+  mutate(across(starts_with("vehicle_type_code_1"),
                 ~ case_when(
                   . %in% c("2 dr sedan", "3-Door", "4 dr sedan", "4dsd",
                         "Convertible", "Sedan", "SEDONA",
@@ -296,7 +295,41 @@ crashes <- crashes %>%
                   . %in% c("FORK", "unk", "UNKNOWN", "OTHER") ~ "Other/Unknown",
                   TRUE ~ "Other/Unknown"
           ))) |>
-      rename(vtype1 = vehicle_type_code_1, vtype2 = vehicle_type_code_2)
+      rename(vtype1 = vehicle_type_code_1)
+
+crashes <- crashes %>%
+  mutate(across(starts_with("vehicle_type_code_2"),
+                ~ case_when(
+                  . %in% c("2 dr sedan", "3-Door", "4 dr sedan", "4dsd",
+                        "Convertible", "Sedan", "SEDONA",
+                        "Station Wagon/Sport Utility Vehicle",
+                        "SPORT UTILITY / STATION WAGON", "LIMO",
+                        "LIVERY VEHICLE") ~ "Passenger vehicles",
+                  . %in% c("AMBU", "AMBUL", "Ambulance", "AMBULANCE",
+                        "AMBULETTE", "Armored Truck", "Beverage Truck",
+                        "Box Truck", "Bulk Agriculture", "Bus", "BUS",
+                        "Carry All", "Chassis Cab", "DELIV", "DELV",
+                        "Dump", "FDNY", "Fire", "FIRE TRUCK", "FIRETRUCK",
+                        "Flat Bed", "Flat Rack", "Garbage or Refuse",
+                        "Hopper", "SMALL COM VEH(4 TIRES)",
+                        "LARGE COM VEH(6 OR MORE TIRES)",
+                        "Mack Truck",
+                        "PICK-UP TRUCK", "PK", "Refrigerated Van", "schoo",
+                        "SCHOO", "Snow Plow", "Tow Truck",
+                        "Tow Truck / Wrecker", "TRACT",
+                        "Tractor Truck Diesel", "Tractor Truck Gasoline",
+                        "TRAIL", "TRAILER", "TRALI", "TRUCK",
+                        "USPS", "UTIL", "Van", "VAN",
+                        "VAN TRUCK") ~ "Commercial vehicles",
+                  . %in% c("MOTOR SCOO", "Motorcycle",
+                        "MOTORCYCLE", "Motorscooter", "SCOOTER", "Moped") ~ 
+                    "Motorcycles",
+                  . %in% c("E-Bike", "BICYCLE", "Bike", "E-Scooter") ~ 
+                    "Non-Motor Vehicle",
+                  . %in% c("FORK", "unk", "UNKNOWN", "OTHER") ~ "Other/Unknown",
+                  TRUE ~ "None"
+          ))) |>
+      rename(vtype2 = vehicle_type_code_2)
 
 # make `factor1`, `factor2`, `vtype1`, and `vtype2`, factors rather than a characters
 crashes <- crashes %>%
