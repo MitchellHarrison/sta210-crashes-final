@@ -37,6 +37,8 @@ The following are the variables of interest from our dataset, with new or re-cat
 
 `crash_day`: a categorical variable corresponding to the day of the week on which the MVC occurred, generated from the original `crash_date` variable.
 
+`weekend_weekday`: a binary variable corresponding to whether a MVC occurred during the weekend or the w
+
 `yday`: a numeric variable ranging from 1 to 365 corresponding to the numerical day of the year on which the MVC occurred.
 
 `crash_time` the time (in 24-hr time) at which the MVC occurred.
@@ -51,7 +53,7 @@ The following are the variables of interest from our dataset, with new or re-cat
 
 `factor1` and `factor2`: categorical variables corresponding any notable factors which were listed as potentially contributing to the crash (if applicable), with categories of "Aggressive/Reckless Driving," "Distraction/Inattention/Fatigue," "Failure to Obey Traffic Signs/Signals/Rules," "Impaired," "Other Technical/Mechanical Factors," and "Other/Unknown."
 
-Our primary research question of interest is whether an accident having casualties or not depends on the type(s) of
+**Our primary research concern is determining which characteristics of the timing and participants involved make a motor vehicle collision (MVC) more likely to involve casualties.**
 
 ## Read Data/Libraries
 
