@@ -12,7 +12,13 @@ execute:
 # Introduction
 ## Project Motivation
 
-**Insert a blurb using a few citations about why this project was important.**
+Citizens of large cities all over America suffer injury and death in motor
+vehicle crashes. In New York, motor vehicle accidents are among the top five
+[reasons for hospitalizations statewide](https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm). 
+We hope that motivated policymakers in NYC and other metropolitan areas could 
+use our explanatory models to craft traffic policy, shift police resources,
+better target traffic citations, and turn our insights into potentially
+lifesaving urban development and planning.
 
 ## Dataset
 
@@ -596,3 +602,7 @@ crashes |>
 ```
 
 #### c.
+
+{{< pagebreak >}}
+# Works Cited
+Department of Health. All Injuries in New York State. (n.d.). Retrieved May 4, 2023, from https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm 
