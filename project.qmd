@@ -207,7 +207,8 @@ crashes <- crashes |>
     yday = yday(crash_date),
     
     # add column for weekend or weekday
-    weekend_weekday = if_else(crash_day %in% c("Saturday", "Sunday"), "Weekend", "Weekday"),
+    weekend_weekday = if_else(crash_day %in% c("Saturday", "Sunday"), 
+                              "Weekend", "Weekday"),
     
     # make `crash_day` a factor rather than a character
     crash_day = as.factor(crash_day),
@@ -222,12 +223,13 @@ crashes <- crashes |>
 ```{r}
 #| label: correct-vehicle-factor-categories
 crashes <- crashes |>
-  filter(!is.na(contributing_factor_vehicle_2) & 
-           is.na(vehicle_type_code_2)) |>
-  mutate(vehicle_type_code_2 = replace_na(vehicle_type_code_2, "unk"))
+  mutate(vehicle_type_code_2 = if_else(
+    !is.na(contributing_factor_vehicle_2) & is.na(vehicle_type_code_2),
+    "unk",
+    vehicle_type_code_2
+  ))
 
-crashes <- crashes |>
-  filter(!is.na(vehicle_type_code_1))
+crashes <- crashes |> drop_na(vehicle_type_code_1)
 
 ped_bike <- "Pedestrian/Bicyclist/Other Pedestrian Error/Confusion"
 crashes <- crashes %>%
@@ -550,8 +552,13 @@ final model.
 
 ```{r}
 #| label: construct-model
-model1 <- glm(has_casualty ~ yday + time_day + crash_day +
-                factor1 + vtype1 , 
+model1 <- glm(has_casualty ~ yday + time_day + weekend_weekday +
+                weekend_weekday * time_day + factor1 + vtype1 + factor2 + 
+                vtype2, 
+              data = crashes, family = "binomial")
+
+model2 <- glm(has_casualty ~ yday + time_day + weekend_weekday +
+                factor1 + vtype1 + factor2 + vtype2, 
               data = crashes, family = "binomial")
 ```
 
