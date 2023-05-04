@@ -10,15 +10,10 @@ execute:
 ---
 
 # Introduction
+
 ## Project Motivation
 
-Citizens of large cities all over America suffer injury and death in motor
-vehicle crashes. In New York, motor vehicle accidents are among the top five
-[reasons for hospitalizations statewide](https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm). 
-We hope that motivated policymakers in NYC and other metropolitan areas could 
-use our explanatory models to craft traffic policy, shift police resources,
-better target traffic citations, and turn our insights into potentially
-lifesaving urban development and planning.
+Citizens of large cities all over America suffer injury and death in motor vehicle crashes. In New York, motor vehicle accidents are among the top five [reasons for hospitalizations statewide](https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm). We hope that motivated policymakers in NYC and other metropolitan areas could use our explanatory models to craft traffic policy, shift police resources, better target traffic citations, and turn our insights into potentially lifesaving urban development and planning.
 
 ## Dataset
 
@@ -306,8 +301,6 @@ crashes <- crashes %>%
 
 ## Exploratory Analysis
 
-The explanatory data analysis helps the reader better understand the observations in the data along with interesting and relevant relationships between the variables. It incorporates appropriate visualizations and summary statistics.
-
 We can see from the visualizations below that vehicle type seems to have a significant impact on MVC casualty rate, particularly with regard to motorcycles and non-motor vehicles.
 
 ```{r}
@@ -439,25 +432,17 @@ The analysis steps are appropriate for the data and research question. The group
 
 ## What we have:
 
-***Our primary research concern is determining which characteristics of a MVC's timing and participants involved make casualties more likely.***
-
 We intend to explore the factors related to timing and characteristics of drivers which might contribute to casualties in MVCs. Our outcome variable of interest, `has_casualty`, is a binary variable, thus the logical option in our case is to fit a logistic regression model to investigate our primary research concern.
 
 We anticipate that the vehicle type involved in the MVC will play a significant role in whether or not a MVC has casualties, particularly in the context of the visualizations from our EDA. We will absolutely want to include the types of the vehicles involved in the crash, `vtype1` and `vtype2`, due to EDA as well as the intuitive fact that MVCs involving vehicles which leave a driver more exposed are far more likely to leave the driver with a casualty.
 
-EDA showed less significant differences in casualty frequency between types of contributing factors to an accident (`factor1` and `factor2`) than it did between types of vehicles. Although we might expect that different contributing factors might contribute differently to accident severity (e.g., we would expect that driving drunk would be more likely to cause an accident with casualties than if someone fails to come to a complete stop at a stop sign), we are not completely sure that these factors will be useful in the fit of our model. Therefore, `factor1` and `factor2` will be *considered* in our model selection process.
+EDA showed less significant differences in casualty frequency between types of contributing factors to an accident (`factor1` and `factor2`) than it did between types of vehicles. Although we might expect that different contributing factors might contribute differently to accident severity (e.g., we would expect that driving drunk would be more likely to cause an accident with casualties than if someone fails to come to a complete stop at a stop sign), we are not completely sure that these factors will be useful in the fit of our model. Therefore, `factor1` and `factor2` will be \*considered\* in our model selection process, and we will treat them as a "package deal," since it stands to reason that if one of the vehicle factors is useful, it would be inappropriate to omit the other
 
-We are very interested in the time status of MVCs and how that may affect casualty likelihood, including time of day (`time_day`), weekend or weekday (`weekend_weekday`), and numerical day of the year (`yday`). In our EDA, we saw that the density of accidents with casualties over the course of a day varied based on `weekend_weekday`, and also observed a change in
+We are very interested in the time status of MVCs and how that may affect casualty likelihood, including time of day (`time_day`), weekend or weekday (`weekend_weekday`), and numerical day of the year (`yday`). In our EDA, we saw that the density of MVCs with casualties over the course of a day varied based on `weekend_weekday`, and also observed a change in relative densities of MVCs with and without accidents according to `yday`. Therefore, we will include `time_day`, `weekend_weekday`, and `yday` in our model. As we observed that weekend MVC casualties were more heavily concentrated in the early morning hours than weekday MVC casualties, we will also *consider* an interaction term between `weekend_weekday` and `time_day`, `weekend_weekday*time_day`.
 
-After consolidating categories, we investigate both the time of day and the day of the year at which an accident occurred. Grouping by day of the week, we find that the time at which injuries with casualties occur varies, with fewer casualties around 5:00 pm and later at night during the weekend. Because of this difference, we include both the time of day and weekday in our model.
+We hoped to include `borough` as a predictor but could not due to high missingness. We also considered using `zip_code`, but this variable had over 100 unique levels and the proportion of accidents with casualties by zip code is approximately normally distributed around a median of 1.191, so we would not expect this to be a useful predictor.
 
-The day of the year (as measured by the number of days after January 1st, i.e., "Julian Day") is also included. During exploratory analysis, we found that accidents had disproportionately few casualties in the winter months and more around the middle of the year. Because of this difference, we include the day of the year as a predictor in our model.
-
-We hoped to include the borough as a predictor but could not. So many observations were missing a value for the borough that including it in our complete-case model would have dropped a substantial portion of our overall dataset. If we could confirm that the borough data was MCAR, then we wouldn't be concerned about the final accuracy of our model. However, because we could not verify the missingness mechanism (and due to the general rarity of MCAR data that isn't explicitly designed as such), we do not include the borough in which the accident occurs in our model.
-
-While we hoped that the zip code might provide valuable explanatory insight, we found two issues with its inclusion in our model: first, there are 100 unique zip codes in the dataset. As a categorical variable, this would make our model much more complex to calculate and communicate. Second, the proportion of accidents with casualties is approximately normally distributed around a median of 1.191. Therefore, specific zip codes are both unlikely to make an appreciable difference in an explanatory model and are highly likely to increase its complexity dramatically. Thus, we do not include zip code in our final model.
-
-We also thought that some streets could have a disproportionately high casualty rate and thereby have a statistically significant impact on our model. However, we ran into many of the same problems that we did with zip codes. In the 10,000 observations we selected from the larger dataset, there were over 1000 unique streets, many of which had minimal accidents. To combat these small number of observations, we used LaPlace succession, adding one to each of the number of accidents and making it a non-casualty accident. This technique allowed us to correct for low accident counts. After applying LaPlace succession, we found that the large majority of streets had no casualties at all, and the remainder were distributed around 0.25. Because of the massive complexity that adding a 1000-level categorical variable would add to our model, combined with an unremarkable distribution of accident proportion after applying LaPlace succession, we are not including streets as a predictor in our final model.
+We will construct and compare 4 models to select our final model, each with `has_casualty` as the response variable. The first will in
 
 # Results
 
@@ -484,39 +469,18 @@ model2 <- glm(has_casualty ~ yday + time_day + weekend_weekday +
 
 ```
 
-# Model 1
+## Model 1
+
 ```{r}
 #| label: model1-tidy
 tidy(model1)
 ```
 
 ## Model 2
+
 ```{r}
 #| label: model2-tidy
 tidy(model2)
-```
-
-```{r}
-#| label: display-model-output-table
-out <- tidy(model1)
-form_out <- out |>
-  filter(p.value <= .05) |>
-  mutate(term = str_replace_all(term, "time_day", "Time of Day: "),
-         term = str_replace_all(term, "crash_day", "Weekday: "),
-         term = str_replace_all(term, "factor1", "Factor 1: "),
-         term = str_replace_all(term, "factor2", "Factor 2: "),
-         term = str_replace_all(term, "vtype1", "Vehicle 1: "),
-         term = str_replace_all(term, "vtype2", "Vehicle 2: "),
-         term = str_replace(term, "yday", "Day of the Year")) |>
-  rename(Predictor = term, Coefficient = estimate, `Standard Error` = std.error,
-         Statistic = statistic, `P-value` = p.value)
-
-form_out |>
-  gt() |>
-  fmt_number(columns = c(Coefficient, `Standard Error`, Statistic, `P-value`),
-             decimals = 3, suffix = T) |>
-  fmt_scientific(columns = !Predictor) |>
-  gtsave("table1.pdf")
 ```
 
 # Discussion
@@ -537,11 +501,9 @@ Overall conclusions from analysis are clearly described, and the model results a
 
 #### a) Sample code for sampling/exportation of large original dataset
 
-```
-crashes_original <- read_csv(<filename>)
-crashes <- sample_n(crashes_original, 10000)
-write_csv(crashes, <"crashes">)
-```
+    crashes_original <- read_csv(<filename>)
+    crashes <- sample_n(crashes_original, 10000)
+    write_csv(crashes, <"crashes">)
 
 ## 2. Exploratory Data Analysis
 
@@ -603,6 +565,4 @@ crashes |>
 
 #### c.
 
-{{< pagebreak >}}
-# Works Cited
-Department of Health. All Injuries in New York State. (n.d.). Retrieved May 4, 2023, from https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm 
+{{< pagebreak >}} # Works Cited Department of Health. All Injuries in New York State. (n.d.). Retrieved May 4, 2023, from https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm
