@@ -2,7 +2,9 @@
 title: "New York's Streetside Casualties"
 subtitle: "An explanatory analysis of NYC car accidents"
 author: "Drew LoPolito and Mitch Harrison"
-format: pdf
+format: 
+  pdf:
+    keep-tex: true
 execute: 
   warning: false
   execute: false
@@ -87,6 +89,7 @@ casualties or not depends on the type(s) of
 library(tidyverse)
 library(tidymodels)
 library(lubridate)
+library(gt)
 ```
 
 ```{r}
@@ -219,6 +222,14 @@ crashes <- crashes |>
 
 ```{r}
 #| label: correct-vehicle-factor-categories
+crashes <- crashes |>
+  filter(!is.na(contributing_factor_vehicle_2) & 
+           is.na(vehicle_type_code_2)) |>
+  mutate(vehicle_type_code_2 = replace_na(vehicle_type_code_2, "unk"))
+
+crashes <- crashes |>
+  filter(!is.na(vehicle_type_code_1))
+
 ped_bike <- "Pedestrian/Bicyclist/Other Pedestrian Error/Confusion"
 crashes <- crashes %>%
   mutate(across(starts_with("contributing_factor_vehicle"),
@@ -288,14 +299,11 @@ crashes <- crashes %>%
       rename(vtype1 = vehicle_type_code_1, vtype2 = vehicle_type_code_2)
 
 # make `factor1`, `factor2`, `vtype1`, and `vtype2`, factors rather than a characters
-    crashes <- crashes %>%
-      mutate(factor1 = as.factor(factor1),
-             factor2 = as.factor(factor2),
-             vtype1 = as.factor(vtype1),
-             vtype2 = as.factor(vtype2))
-
-view(crashes)
-
+crashes <- crashes %>%
+  mutate(factor1 = as.factor(factor1),
+         factor2 = as.factor(factor2),
+         vtype1 = as.factor(vtype1),
+         vtype2 = as.factor(vtype2))
 ```
 
 ```{r}
@@ -507,14 +515,50 @@ because adding street as a predictor would introduce massive model complexity,
 we will not use the street on which an accident occurs as a predictor in the
 final model.
 
-# Model Construction
 ```{r}
 #| label: construct-model
-model1 <- glm(has_casualty ~ yday + time_day + + crash_day +
-                factor1 + factor2 + vtype1 + vtype2, 
+model1 <- glm(has_casualty ~ yday + time_day + crash_day +
+                factor1 + vtype1 , 
               data = crashes, family = "binomial")
-print(tidy(model1), n = 23)
 ```
+
+```{r}
+#| label: display-model-output-table
+out <- tidy(model1)
+form_out <- out |>
+  mutate(term = str_replace_all(term, "time_day", "Time of Day: "),
+         term = str_replace_all(term, "crash_day", "Weekday: "),
+         term = str_replace_all(term, "factor1", "Factor 1: "),
+         term = str_replace_all(term, "factor2", "Factor 2: "),
+         term = str_replace_all(term, "vtype1", "Vehicle 1: "),
+         term = str_replace_all(term, "vtype2", "Vehicle 2: "),
+         term = str_replace(term, "yday", "Day of the Year")) |>
+  rename(Predictor = term, Coefficient = estimate, `Standard Error` = std.error,
+         Statistic = statistic, `P-value` = p.value)
+
+form_out |>
+  slice_head(n = 15) |>
+  gt() |>
+  fmt_number(columns = c(Coefficient, `Standard Error`, Statistic, `P-value`),
+             decimals = 3, suffix = T) |>
+  fmt_scientific(columns = !Predictor) |>
+  gtsave("table1.pdf")
+
+form_out |>
+  slice_tail(n = 14) |>
+  gt() |>
+  fmt_number(columns = c(Coefficient, `Standard Error`, Statistic, `P-value`),
+             decimals = 3, suffix = T) |>
+  fmt_scientific(columns = !Predictor) |>
+  gtsave("table2.pdf")
+```
+
+{{< pagebreak >}}
+
+![Model Output](table1.pdf)
+![Model Output](table2.pdf)
+
+{{< pagebreak >}}
 
 # Results
 
