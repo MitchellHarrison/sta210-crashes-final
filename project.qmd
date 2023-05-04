@@ -327,10 +327,6 @@ levels(crashes$vtype2)
 
 The explanatory data analysis helps the reader better understand the observations in the data along with interesting and relevant relationships between the variables. It incorporates appropriate visualizations and summary statistics.
 
-#\| include: false
-
-***Our primary research concern is determining which characteristics of a MVC's timing and participants involved make casualties more likely.***
-
 **Below I was trying to make charts of the casualty proportions of accidents by vehicle types 1 and 2. The gist is clear, but if you could clean them up a bit to make them look good that would be awesome.**
 
 We can see from the visualizations below that vehicle type seems to have a significant impact on MVC casualty rate, particularly with regard to motorcycles and non-motor vehicles.
@@ -539,7 +535,9 @@ The analysis steps are appropriate for the data and research question. The group
 
 ## What we have:
 
-To explore the factors that lead to casualties in car accidents, we will construct a binary logistic regression model. For the purposes of this analysis, we define "casualties" as injuries or fatalities, not just fatalities. We are only examining accidents involving two or fewer vehicles, which account for over 90% of accidents while avoiding the complexities involved with correcting for several vehicle types at once.
+***Our primary research concern is determining which characteristics of a MVC's timing and participants involved make casualties more likely.***
+
+We intend to explore the factors related to timing and characteristics of drivers which might contribute to casualties in MVCs. Our outcome variable of interest, `has_casualty`, is a binary variable, thus we will fit a logistic regression model to investigate our primary research concern.
 
 We anticipate that the vehicle type involved in the accident will play a significant role, but our dataset has over 100 individual vehicle types. To simplify our model and avoid overfitting, we consolidated these into five larger categories: passenger vehicles, commercial vehicles, motorcycles, non-motor vehicles, and others/unknown. We also anticipated a significant impact on accident severity by reason for the accident. Specifically, we wanted to investigate impaired driving to other causes. Like the vehicle type, however, we risked overfitting and over-complicating our model because of the sheer number of accident causes. Like our vehicle type variable, we consolidated accident causes into five categories: impaired, distraction/inattention/fatigue, aggressive/reckless driving, failure to obey traffic signs/signals/rules, technical/mechanical failures, and other/unknown.
 
