@@ -19,56 +19,41 @@ This section includes an introduction to the project motivation, data, and resea
 
 ### Grading Criteria
 
-The research question and motivation are clearly stated in the introduction, including citations for the data source and any external research. The data are clearly described, including a description about how the data were originally collected and a concise definition of the variables relevant to understanding the report. The data cleaning process is clearly described, including any decisions made in the process (e.g., creating new variables, removing observations, etc.) The explanatory data analysis helps the reader better understand the observations in the data along with interesting and relevant relationships between the variables. It incorporates appropriate visualizations and summary statistics.
+The research question and motivation are clearly stated in the introduction, including citations for the data source and any external research.
+
+The data are clearly described, including a description about how the data were originally collected and a concise definition of the variables relevant to understanding the report.
+
+The data cleaning process is clearly described, including any decisions made in the process (e.g., creating new variables, removing observations, etc.)
+
+The explanatory data analysis helps the reader better understand the observations in the data along with interesting and relevant relationships between the variables. It incorporates appropriate visualizations and summary statistics.
 
 ## What we have:
 
+## Project Motivation
+
+**Insert a blurb using a few citations about why this project was important.**
+
 ## Dataset
 
-Our dataset is composed of harvested and compiled data from New York City Police Department (NYPD) open access data on all police reported motor vehicle collisions (MVC) in all five boroughs of New York City from July 1st, 2012 through April 24th, 2023. The police report from which individual MVC observations in our dataset hail (MV104-AN) is required to be filled out for MVC where someone is injured or killed, or which result in at least \$1,000 of total property damage. Notably, only one MV104-AN form is filled out for all involved in an accident, meaning each observation in our dataset represents a unique MVC.
+Our dataset is composed of harvested and compiled data from New York City Police Department (NYPD) open access data on all police reported motor vehicle collisions (MVC) in all five boroughs of New York City from July 1st, 2012 through April 24th, 2023. The police report from which individual MVC observations in our dataset hail (MV104-AN) is required to be filled out for MVC where someone is injured or killed, or which result in at least \$1,000 of total property damage.
 
-Our initial dataset contained approximately 1.9 million observations, found [here](https://www.kaggle.com/datasets/utkarshx27/motor-vehicle-collisions?resource=download). This was too large to push to git, so we sampled 10,000 observations from the dataset completely at random (code shown in Methods). The original dataset, as well as our randomly sampled dataset, contained data on crashes involving 1 to 5 motorists, however, 93% of crashes in the dataset occurred between 2 or fewer motorists (98% between 3 or fewer and 100% between 4 or fewer). Due to high levels of missingness in crashes with 3 or more motorists, as well as their low real-world frequency in New York City (where the kind of highway pile-ups which generate MVC with 3 or more motorists aren't generally observed), we decided to examine exclusively MVC between 2 or fewer motorists, which brought our total number of observations down to approximately 9,300.
+We created a number of new variables by manipulating the dataset, as well as re-categorizing/cleaning some of the existing variables for practical use in modeling (for example, the original variables for factors contributing to the accident for each motorist and vehicle type of each motorist contained roughly 100 categories).
 
-We created a number of new variables by manipulating the dataset, as well as
-re-categorizing/cleaning some of the existing variables for practical use in
-modeling (for example, the original variables for factors contributing to the
-accident for each motorist and vehicle type of each motorist contained roughly
-100 categories).
+The following are the variables of interest from our dataset, with new or re-categorized variables noted:
 
-The following are the variables of interest from our dataset, with new or
-re-categorized variables noted:
+**`has_casualty`** (New): a binary variable corresponding to whether a MVC resulted in at least one casualty. This variable was generated from the original `number_of_persons_injured` and `number_of_persons_killed` variables. **This is our response variable of interest.**
 
-`has_casualty`: a binary variable corresponding to whether or not a MVC resulted
-in at least one casualty.
+**`weekend_weekday`** (New): a binary variable corresponding to whether a MVC occurred during the week or weekend. This variable was generated from the original `crash_date` variable.
 
-`weekend_weekday`: a binary variable corresponding to whether a MVC occurred
-during the weekend or the w
+**`yday`** (New): a numeric variable ranging from 1 to 365 corresponding to the numerical day of the year on which the MVC occurred. This variable was generated from the original `crash_date` variable.
 
-`yday`: a numeric variable ranging from 1 to 365 corresponding to the numerical
-day of the year on which the MVC occurred.
+**`time_day`** (New): a categorical variable with levels of "morning" (5 AM to 12 PM), "afternoon" (12 PM to 5 PM), "evening" (5 PM to 9 PM), and "night" (9 PM to 5 AM) corresponding to the time of day at which a MVC occurred. This variable was generated from the original 24-hr `crash_time` variable.
 
-`time_day`: a categorical variable with levels of "morning," "afternoon,"
-"evening," and "night" corresponding to the time of day at which a MVC occurred.
-This variable was generated from the `crash_time` variable, with "morning" from 
-5 AM to 12 PM, "afternoon" from 12 PM to 5 PM, "evening" from 5 PM to 9 PM, and
-"night" from 9 PM to 5 AM.
+**`vtype1`** and **`vtype2`** (Recategorized): categorical variables corresponding to the type(s) of each vehicle involved in the crash, with categories of "Passenger vehicles," "Commercial vehicles," "Motorcycles," "Non-Motor Vehicle," "Other/Unknown," and "None" (only applies to `vtype2`).
 
-`vtype1` and `vtype2`: categorical variables corresponding to the types of each
-vehicle (if applicable) involved in the crash, with categories of "Commercial
-vehicles," "Passenger vehicles," "Motorcycles," "Non-Motor Vehicle," and
-"Other/Unknown."
+**`factor1`** and **`factor2`** (Recategorized): categorical variables corresponding to any factor(s) which potentially contributed to the crash for respective vehicles, with categories of "Aggressive/Reckless Driving," "Failure to Obey Traffic Signs/Signals/Rules," "Impairment/Distraction/Fatigue," "Performance-unrelated Technical/Mechanical Factors," and "Other/Unknown."
 
-`factor1` and `factor2`: categorical variables corresponding any notable factors
-which were listed as potentially contributing to the crash (if applicable), with
-categories of "Aggressive/Reckless Driving," "Distraction/Inattention/Fatigue,"
-"Failure to Obey Traffic Signs/Signals/Rules," "Impaired," "Other
-Technical/Mechanical Factors," and "Other/Unknown."
-
-**Our primary research concern is determining which characteristics of the** 
-**timing and participants involved make a motor vehicle collision (MVC) more**
-**likely to involve casualties.**
-
-## Read Data/Libraries
+***Our primary research concern is determining which characteristics of a MVC's timing and participants involved make casualties more likely.***
 
 ```{r}
 #| label: import-libs
@@ -81,72 +66,18 @@ library(gt)
 ```{r}
 #| label: read-data
 crashes <- read_csv("data/crashes_10k.csv")
+
 ```
 
-# Methodology
-To explore the factors that lead to casualties in car accidents, we will
-construct a binary logistic regression model. For the purposes of this analysis,
-we define "casualties" as injuries or fatalities, not just fatalities. We are
-only examining accidents involving two or fewer vehicles, which account for over
-90% of accidents while avoiding the complexities involved with correcting for
-several vehicle types at once.
+## Data Cleaning
 
-We anticipate that the vehicle type involved in the accident will play a
-significant role, but our dataset has over 100 individual vehicle types. To
-simplify our model and avoid overfitting, we consolidated these into five larger
-categories: passenger vehicles, commercial vehicles, motorcycles, non-motor
-vehicles, and others/unknown. We also anticipated a significant impact on
-accident severity by reason for the accident. Specifically, we wanted to
-investigate impaired driving to other causes. Like the vehicle type, however, we
-risked overfitting and over-complicating our model because of the sheer number 
-of accident causes. Like our vehicle type variable, we consolidated accident
-causes into five categories: impaired, distraction/inattention/fatigue,
-aggressive/reckless driving, failure to obey traffic signs/signals/rules,
-technical/mechanical failures, and other/unknown.
+Notably, only one MV104-AN form is filled out for all involved in an accident, meaning each observation in our dataset represents a unique MVC.
 
-After consolidating categories, we investigate both the time of day and the day
-of the year at which an accident occurred. Grouping by day of the week, we find
-that the time at which injuries with casualties occur varies, with fewer
-casualties around 5:00 pm and later at night during the weekend. Because of this
-difference, we include both the time of day and weekday in our model.
+Our initial dataset contained approximately 1.9 million observations, found [here](https://www.kaggle.com/datasets/utkarshx27/motor-vehicle-collisions?resource=download). This was too large to push to git, so we sampled 10,000 observations from the dataset completely at random (code shown in Appendix: Data Cleaning). The original dataset, as well as our randomly sampled dataset, contained data on crashes involving 1 to 5 motorists. However, 93% of crashes in the dataset occurred between 2 or fewer motorists (98% between 3 or fewer and 100% between 4 or fewer). Due to high levels of missingness in crashes with 3 or more motorists, as well as their low real-world frequency in New York City (where the kind of highway pile-ups which generate MVC with 3 or more motorists aren't generally observed), we decided to examine exclusively MVC between 2 or fewer motorists by removing all observations involving more than two vehicles, which brought our total number of observations down to approximately 9,300.
 
-The day of the year (as measured by the number of days after January 1st, i.e.,
-"Julian Day") is also included. During exploratory analysis, we found that
-accidents had disproportionately few casualties in the winter months and more
-around the middle of the year. Because of this difference, we include the day of
-the year as a predictor in our model.
+Next, we used the original counts of persons killed and persons injured to create a count of casualties, `num_casualties`, (defined as injuries **and** casualties). We then created binary variables for MVC injury, fatality, and casualty, the last of which, `has_casualty`, is our response variable of interest. We used these three variables to create a ordinal category of accident severity, with levels of "no casualties," "injury," and "fatal."
 
-We hoped to include the borough as a predictor but could not. So many
-observations were missing a value for the borough that including it in our
-complete-case model would have dropped a substantial portion of our overall
-dataset. If we could confirm that the borough data was MCAR, then we wouldn't be
-concerned about the final accuracy of our model. However, because we could not
-verify the missingness mechanism (and due to the general rarity of MCAR data 
-that isn't explicitly designed as such), we do not include the borough in which
-the accident occurs in our model.
-
-While we hoped that the zip code might provide valuable explanatory insight, we
-found two issues with its inclusion in our model: first, there are 100 unique 
-zip codes in the dataset. As a categorical variable, this would make our model
-much more complex to calculate and communicate. Second, the proportion of
-accidents with casualties is approximately normally distributed around a median
-of 1.191. Therefore, specific zip codes are both unlikely to make an appreciable
-difference in an explanatory model and are highly likely to increase its
-complexity dramatically. Thus, we do not include zip code in our final model.
-
-We also thought that some streets could have a disproportionately high casualty
-rate and thereby have a statistically significant impact on our model. However,
-we ran into many of the same problems that we did with zip codes. In the 10,000
-observations we selected from the larger dataset, there were over 1000 unique
-streets, many of which had minimal accidents. To combat these small number of
-observations, we used LaPlace succession, adding one to each of the number of
-accidents and making it a non-casualty accident. This technique allowed us to
-correct for low accident counts. After applying LaPlace succession, we found 
-that the large majority of streets had no casualties at all, and the remainder
-were distributed around 0.25. Because of the massive complexity that adding a
-1000-level categorical variable would add to our model, combined with an
-unremarkable distribution of accident proportion after applying LaPlace
-succession, we are not including streets as a predictor in our final model.
+We also cleaned/manipulated the time data, which initially was composed of a date column and a 24-hr time column. We used this data to create a variable for MVC time of the day `time_day`, day of the week, `crash_day`, numerical day of the year (1-365), `yday`, and weekday or weekend timing, `weekend_weekday`.
 
 ```{r}
 #| label: clean-data
@@ -175,10 +106,11 @@ crashes <- crashes |>
     ) %>% 
       factor(levels = c("morning", "afternoon", "evening", "night")),
     
-    # add ordinal column for injuries v. fatalities
+    # create binary variables for injury, fatality, and casualty
     has_injury = number_of_persons_injured > 0,
     has_fatality = number_of_persons_killed >0,
     has_casualty = has_injury | has_fatality,
+    # add ordinal column, `severity`, for no casualties v. injuries v. fatalities
     severity = case_when(
       has_fatality ~ "fatal",
       has_injury ~ "injury",
@@ -203,7 +135,67 @@ crashes <- crashes |>
 
   )
 
+
+view(crashes)
+
+# Count the number of levels in vehicle_type_code_1
+nlevels_vehicle_type_code_1 <- length(levels(factor(crashes$vehicle_type_code_1)))
+cat("Number of levels in vehicle_type_code_1:", nlevels_vehicle_type_code_1, "\n")
+
+# Count the number of levels in vehicle_type_code_2
+nlevels_vehicle_type_code_2 <- length(levels(factor(crashes$vehicle_type_code_2)))
+cat("Number of levels in vehicle_type_code_2:", nlevels_vehicle_type_code_2, "\n")
+
+# Count the number of levels in contributing_factor_vehicle_1
+nlevels_contributing_factor_vehicle_1 <- length(levels(factor(crashes$contributing_factor_vehicle_1)))
+cat("Number of levels in contributing_factor_vehicle_1:", nlevels_contributing_factor_vehicle_1, "\n")
+
+# Count the number of levels in contributing_factor_vehicle_2
+nlevels_contributing_factor_vehicle_2 <- length(levels(factor(crashes$contributing_factor_vehicle_2)))
+cat("Number of levels in contributing_factor_vehicle_2:", nlevels_contributing_factor_vehicle_2, "\n")
+
+# combine unique levels from both vehicle_type_code variables
+unique_levels_veh_type <- union(crashes$vehicle_type_code_1,
+                                crashes$vehicle_type_code_2)
+
+# count total number of unique levels in vehicle_type_code variables
+num_unique_levels_veh_type <- length(unique_levels_veh_type)
+
+# print
+num_unique_levels_veh_type
+
+# combine unique levels from both contributing_factor variables
+unique_levels_cont_fact <- union(crashes$contributing_factor_vehicle_1,
+                                 crashes$contributing_factor_vehicle_2)
+
+# count total number of unique levels in contributing_factor variables
+num_unique_levels_cont_fact <- length(unique_levels_cont_fact)
+
+# print
+num_unique_levels_cont_fact
+
+# count number of MVCs without vehicle type 2 but with a contributing factor vehicle 2
+crashes %>%
+  filter(!is.na(contributing_factor_vehicle_2) & is.na(vehicle_type_code_2)) %>%
+  count()
+
+# count number of MVCs without data for vehicle type 1
+crashes %>%
+  filter(is.na(vehicle_type_code_1)) %>%
+  count()
+
+# count proportion of MVCs without data for vehicle type 1
+(crashes %>%
+  filter(is.na(vehicle_type_code_1)) %>%
+  count())/(nrow(crashes))
+  
 ```
+
+Next, we cleaned the original variables corresponding to vehicle types, `vehicle_type_code_(1 or 2)`, involved in the accident as well as factors in each vehicle which may have contributed to the MVC, `contributing_factor_vehicle_(1 or 2)`. 453 MVCs contained an observation for `contributing_factor_vehicle_2` but were NA for `vehicle_type_code_2`, which we believe indicated not that there wasn't a second vehicle but that the vehicle type hadn't been recorded, so we replaced the `vehicle_type_code_2` NAs by indicating that it was simply unknown. Additionally, 59 MVCs had missing observations for `vehicle_type_code_1`, which we removed since each MVC must involve at least one vehicle and this represented only 0.638% of the dataset.
+
+Our initial dataset had 121 unique levels for `vehicle_type_code_(1 or 2)`. In order to make these types interpretable for EDA and potentially in our model, we renamed the variables `vtype(1 or 2)` and consolidated them into 5 larger categories: "Passenger vehicles," "Commercial vehicles," "Motorcycles," "Non-Motor Vehicle," and "Other/Unknown" (also a category of "None", which only applies to `vtype2`).
+
+The initial dataset also had 53 unique levels for `contributing_factor_vehicle_(1 or 2)`. In order to make these types interpretable for EDA and potentially in our model, we renamed the variables `factor(1 or 2)` and consolidated them into 5 larger categories: "Aggressive/Reckless Driving," "Failure to Obey Traffic Signs/Signals/Rules," "Impairment/Distraction/Fatigue," "Performance-unrelated Technical/Mechanical Factors," and "Other/Unknown."
 
 ```{r}
 #| label: correct-vehicle-factor-categories
@@ -221,11 +213,11 @@ crashes <- crashes %>%
   mutate(across(starts_with("contributing_factor_vehicle"),
                 ~ case_when(
                   . %in% c("Alcohol Involvement", "Drugs (Illegal)",
-                           "Prescription Medication") ~ "Impaired",
-                  . %in% c("Driver Inattention/Distraction", "Fatigued/Drowsy",
+                           "Prescription Medication",
+                           "Driver Inattention/Distraction","Fatigued/Drowsy",
                            "Lost Consciousness", "Other Electronic Device",
                            "Outside Car Distraction", "Passenger Distraction")
-                           ~ "Distraction/Inattention/Fatigue",
+                           ~ "Impairment/Distraction/Fatigue",
                   . %in% c("Following Too Closely", "Passing Too Closely",
                            "Unsafe Lane Changing",
                            "Unsafe Speed",
@@ -243,7 +235,7 @@ crashes <- crashes %>%
                            "Traffic Control Device Improper/Non-Working",
                            "Traffic Control Disregarded",
                            "View Obstructed/Limited")
-                           ~ "Other Technical/Mechanical Factors",
+                           ~ "Performance-unrelated Technical/Mechanical Factors",
                   TRUE ~ "Other/Unknown"
                 )
   )) |>
@@ -318,15 +310,73 @@ crashes <- crashes %>%
           ))) |>
       rename(vtype2 = vehicle_type_code_2)
 
-# make `factor1`, `factor2`, `vtype1`, and `vtype2`, factors rather than a characters
+# make `factor1`, `factor2`, `vtype1`, and `vtype2` factors rather than characters
 crashes <- crashes %>%
   mutate(factor1 = as.factor(factor1),
          factor2 = as.factor(factor2),
          vtype1 = as.factor(vtype1),
          vtype2 = as.factor(vtype2))
+
+levels(crashes$factor1)
+levels(crashes$factor2)
+levels(crashes$vtype1)
+levels(crashes$vtype2)
 ```
 
 ## Exploratory Analysis
+
+The explanatory data analysis helps the reader better understand the observations in the data along with interesting and relevant relationships between the variables. It incorporates appropriate visualizations and summary statistics.
+
+#\| include: false
+
+***Our primary research concern is determining which characteristics of a MVC's timing and participants involved make casualties more likely.***
+
+```{r}
+#| label: viz-hist-by-street
+crashes |>
+  group_by(vtype1) |>
+  summarise(count = n()) |>
+  mutate(color = if_else(is.na(borough), "red", "lightgray")) |>
+  ggplot(aes(x = vtype1, y = count, fill = color)) +
+  geom_col() +
+  scale_fill_identity() +
+  theme_classic() +
+  labs(
+    x = NULL,
+    y = "",
+    title = "\"Missing\" is the biggest borough in NYC",
+    subtitle = paste("Missingness of borough variable is too great to include",
+                     "in the model")
+  )
+
+color_cas <- crashes %>%
+  mutate(color_cas = if_else(vtype1 %in% c("Motorcycles", "Non-Motor Vehicle"),
+                             "red", "lightgray"))
+
+crashes %>%
+  group_by(vtype1) %>%
+  summarise(casualty_prop = sum(has_casualty == TRUE) / n()) %>%
+  ggplot(aes(x = vtype1, y = casualty_prop, fill = color_cas)) +
+  geom_col() +
+  labs(x = "Vehicle Type 1", y = "Casualty Rate", fill = "Casualty", 
+       title = "Casualties Occur More Frequently in Accidents")
+
+ggplot(data = crashes, aes(x = vtype1, fill = has_casualty)) +
+  geom_bar(position = "fill", color = "black") + 
+  scale_fill_manual(values = c(alpha("blue", 0), "red"), labels = c("No", "Yes")) +
+  labs(x = "Vehicle Type 1", y = "Casualty Rate", fill = "Casualty", title = "Casualties Occur More Frequently in Accidents")
+
+ggplot(data = crashes, aes(x = vtype1, fill = has_casualty)) +
+  geom_bar(position = "fill", color = "black") + 
+  scale_fill_manual(values = c(alpha("blue", 0), "red"), labels = c("No", "Yes")) +
+  labs(x = "Vehicle Type 1", y = "Casualty Rate", fill = "Casualty", title = "Casualties Occur More Frequently in Accidents")
+
+ggplot(data = crashes, aes(x = vtype2, fill = has_casualty)) +
+  geom_bar(position = "fill", color = "black") + 
+  scale_fill_manual(values = c(alpha("blue", 0), "red"), labels = c("No", "Yes")) +
+  labs(x = "Vehicle Type 2", y = "Casualty Rate", fill = "Casualty", title = "Casualties Occur More Frequently in Accidents")
+
+```
 
 ```{r}
 #| label: viz-time-density
@@ -387,7 +437,6 @@ crashes |>
 
 ```{r}
 #| label: viz-hist-by-street
-#| include: false
 crashes |>
   group_by(borough) |>
   summarise(count = n()) |>
@@ -457,7 +506,10 @@ crashes |>
   )
 ```
 
+# Methodology
+
 ## Instructions:
+
 This section includes a brief description of your modeling process. Explain the reasoning for the type of model you're fitting, predictor variables considered for the model including any interactions. Additionally, show how you arrived at the final model by describing the model selection process, interactions considered, variable transformations (if needed), assessment of conditions and diagnostics, and any other relevant considerations that were part of the model fitting process.
 
 ### Grading criteria
@@ -502,6 +554,9 @@ model1 <- glm(has_casualty ~ yday + time_day + weekend_weekday +
 model2 <- glm(has_casualty ~ yday + time_day + weekend_weekday +
                 factor1 + vtype1 + factor2 + vtype2, 
               data = crashes, family = "binomial")
+
+summary(model1)
+summary(model2)
 ```
 
 ```{r}
@@ -540,3 +595,17 @@ In this section you'll include a summary of what you have learned about your res
 Overall conclusions from analysis are clearly described, and the model results are put into the larger context of the subject matter and original research question. There is thoughtful consideration of potential limitations of the data and/or analysis, and ideas for future work are clearly described.
 
 ## What we have
+
+# Appendix
+
+## Data Cleaning
+
+#### Sample code for sampling/exportation of large original dataset
+
+```{r}
+
+crashes_original <- read_csv(<filename>)
+crashes <- sample_n(crashes_original, 10000)
+write_csv(crashes, <"crashes">)
+
+```
