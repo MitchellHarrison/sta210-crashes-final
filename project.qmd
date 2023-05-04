@@ -548,8 +548,6 @@ form_out |>
   gtsave("table1.pdf")
 ```
 
-![Model Output](table1.pdf)
-
 # Discussion
 
 ## Instructions:
