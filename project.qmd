@@ -85,7 +85,7 @@ crashes <- crashes |>
   # remove accidents involving greater than 2 vehicles
   filter(is.na(contributing_factor_vehicle_3), is.na(vehicle_type_code_3)) |>
   
-  select(!c(vehicle_type_code_3, vehicle_type_code_4, vehicle_type_code_5,
+  dplyr::select(!c(vehicle_type_code_3, vehicle_type_code_4, vehicle_type_code_5,
             contributing_factor_vehicle_3, contributing_factor_vehicle_4,
             contributing_factor_vehicle_5)) |>
   
@@ -537,9 +537,13 @@ The analysis steps are appropriate for the data and research question. The group
 
 ***Our primary research concern is determining which characteristics of a MVC's timing and participants involved make casualties more likely.***
 
-We intend to explore the factors related to timing and characteristics of drivers which might contribute to casualties in MVCs. Our outcome variable of interest, `has_casualty`, is a binary variable, thus we will fit a logistic regression model to investigate our primary research concern.
+We intend to explore the factors related to timing and characteristics of drivers which might contribute to casualties in MVCs. Our outcome variable of interest, `has_casualty`, is a binary variable, thus the logical option in our case is to fit a logistic regression model to investigate our primary research concern.
 
-We anticipate that the vehicle type involved in the accident will play a significant role, but our dataset has over 100 individual vehicle types. To simplify our model and avoid overfitting, we consolidated these into five larger categories: passenger vehicles, commercial vehicles, motorcycles, non-motor vehicles, and others/unknown. We also anticipated a significant impact on accident severity by reason for the accident. Specifically, we wanted to investigate impaired driving to other causes. Like the vehicle type, however, we risked overfitting and over-complicating our model because of the sheer number of accident causes. Like our vehicle type variable, we consolidated accident causes into five categories: impaired, distraction/inattention/fatigue, aggressive/reckless driving, failure to obey traffic signs/signals/rules, technical/mechanical failures, and other/unknown.
+We anticipate that the vehicle type involved in the MVC will play a significant role in whether or not a MVC has casualties, particularly in the context of the visualizations from our EDA. We will absolutely want to include the types of the vehicles involved in the crash, `vtype1` and `vtype2`, due to EDA as well as the intuitive fact that MVCs involving vehicles which leave a driver more exposed are far more likely to leave the driver with a casualty.
+
+EDA showed less significant differences in casualty frequency between types of contributing factors to an accident (`factor1` and `factor2`) than it did between types of vehicles. Although we might expect that different contributing factors might contribute differently to accident severity (e.g., we would expect that driving drunk would be more likely to cause an accident with casualties than if someone fails to come to a complete stop at a stop sign), we are not completely sure that these factors will be useful in the fit of our model. Therefore, `factor1` and `factor2` will be *considered* in our model selection process.
+
+We are very interested in the time status of MVCs and how that may affect casualty likelihood, including time of day (`time_day`), weekend or weekday (`weekend_weekday`), and numerical day of the year (`yday`). In our EDA, we saw that the density of accidents with casualties over the course of a day varied based on `weekend_weekday`, and also observed a change in
 
 After consolidating categories, we investigate both the time of day and the day of the year at which an accident occurred. Grouping by day of the week, we find that the time at which injuries with casualties occur varies, with fewer casualties around 5:00 pm and later at night during the weekend. Because of this difference, we include both the time of day and weekday in our model.
 
