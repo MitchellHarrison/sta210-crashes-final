@@ -156,7 +156,7 @@
 
 \begin{document}
 \maketitle
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[borderline west={3pt}{0pt}{shadecolor}, sharp corners, interior hidden, enhanced, frame hidden, breakable, boxrule=0pt]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[enhanced, borderline west={3pt}{0pt}{shadecolor}, interior hidden, breakable, sharp corners, frame hidden, boxrule=0pt]}{\end{tcolorbox}}\fi
 
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
@@ -316,84 +316,6 @@ combined with an unremarkable distribution of accident proportion after
 applying LaPlace succession, we are not including streets as a predictor
 in our final model.
 
-\hypertarget{data-wrangling}{%
-\section{Data Wrangling}\label{data-wrangling}}
-
-\begin{verbatim}
-[1] "NULL"
-\end{verbatim}
-
-\begin{verbatim}
-NULL
-\end{verbatim}
-
-\begin{verbatim}
-NULL
-\end{verbatim}
-
-\begin{verbatim}
-# A tibble: 1 x 1
-      n
-  <int>
-1  2823
-\end{verbatim}
-
-\begin{verbatim}
-# A tibble: 1 x 1
-      n
-  <int>
-1  1920
-\end{verbatim}
-
-\begin{verbatim}
-# A tibble: 1 x 1
-      n
-  <int>
-1     8
-\end{verbatim}
-
-\begin{verbatim}
-# A tibble: 1 x 1
-      n
-  <int>
-1   374
-\end{verbatim}
-
-\begin{verbatim}
-# A tibble: 1 x 1
-      n
-  <int>
-1   112
-\end{verbatim}
-
-\begin{verbatim}
-# A tibble: 1 x 1
-      n
-  <int>
-1    37
-\end{verbatim}
-
-\begin{verbatim}
-# A tibble: 1 x 1
-      n
-  <int>
-1    15
-\end{verbatim}
-
-\begin{verbatim}
-# A tibble: 1 x 1
-      n
-  <int>
-1     8
-\end{verbatim}
-
-\begin{verbatim}
-# A tibble: 1 x 1
-      n
-  <int>
-1     4
-\end{verbatim}
-
 \hypertarget{exploratory-analysis}{%
 \section{Exploratory Analysis}\label{exploratory-analysis}}
 
@@ -404,12 +326,11 @@ NULL
 
 Of accidents with one or more casualties, those happening on Saturdays
 and Sundays appear to occur disproportionately late at night and with a
-notably smaller peak around 5:00 pm. While there is variance around the
-weekend, the general pattern stays the same between all seven days. To
-account for this, we will introduce a random effect based on the days of
-the week to allow information sharing between them. We anticipate that
-our model's performance will benefit from such a change, and this random
-effect will end up in the final model after performance evaluation.
+notably smaller peak around 5:00 pm. Because of this difference, we
+constructed a new variable to denote whether or not an accident happens
+on a weekend or weekday. We will build two models, one with an
+interaction term between the time of day and weekend/weekday and one
+without, and compare their performance before selecting a final model.
 
 \hypertarget{day-of-the-year}{%
 \subsection{Day of the year}\label{day-of-the-year}}
@@ -425,8 +346,6 @@ potential predictor of interest in our final model.
 \hypertarget{borough}{%
 \subsection{Borough}\label{borough}}
 
-\includegraphics{project_files/figure-pdf/viz-hist-by-street-1.pdf}
-
 We have far too many missing values to include borough in our model. If
 we could verify that borough was Missing Completely At Random (MCAR), we
 could include it in our complete-case model. Still, unfortunately, we
@@ -441,7 +360,7 @@ final model.
 
 Building a box plot to observe the distribution of accident proportion
 by zip code, we see that casualty rates are approximately normally
-distributed about a median of 0.191. Because of the large absolute
+distributed about a median of 0.186. Because of the large absolute
 number of zip codes in the dataset and the unlikely impact of a normally
 distributed proportion having a significant impact on the model, we will
 not use zip code as a predictor in the final model.
@@ -459,11 +378,15 @@ unremarkable distribution and because adding street as a predictor would
 introduce massive model complexity, we will not use the street on which
 an accident occurs as a predictor in the final model.
 
-\newpage{}
+\begin{figure}
 
-\includegraphics{table1.pdf} \includegraphics{table2.pdf}
+{\centering \includegraphics{table1.pdf}
 
-\newpage{}
+}
+
+\caption{Model Output}
+
+\end{figure}
 
 \hypertarget{results}{%
 \section{Results}\label{results}}

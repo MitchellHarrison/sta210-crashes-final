@@ -162,7 +162,6 @@ were distributed around 0.25. Because of the massive complexity that adding a
 unremarkable distribution of accident proportion after applying LaPlace
 succession, we are not including streets as a predictor in our final model.
 
-# Data Wrangling
 ```{r}
 #| label: clean-data
 crashes <- crashes |>
@@ -341,70 +340,25 @@ crashes <- crashes %>%
          vtype2 = as.factor(vtype2))
 ```
 
-```{r}
-#| label: examine-data
-class(crashes$contributing_factor_vehicle_1)
-
-levels(crashes$contributing_factor_vehicle_1)
-
-levels(crashes$contributing_factor_vehicle_2)
-
-crashes %>%
-  filter(is.na(borough)) %>%
-  count()
-
-crashes %>%
-  filter(is.na(borough)) %>%
-  filter(!is.na(latitude)) %>%
-  count()
-
-crashes %>%
-  filter(number_of_persons_killed != 0) %>%
-  count()
-
-crashes %>%
-  filter(num_casualties > 1) %>%
-  count()
-
-crashes %>%
-  filter(num_casualties > 2) %>%
-  count()
-
-crashes %>%
-  filter(num_casualties > 3) %>%
-  count()
-
-crashes %>%
-  filter(num_casualties > 4) %>%
-  count()
-
-crashes %>%
-  filter(num_casualties > 5) %>%
-  count()
-
-crashes %>%
-  filter(num_casualties > 6) %>%
-  count()
-```
-
 # Exploratory Analysis
 
 ## Time of Day
 ```{r}
 #| label: viz-time-density
+#| fig-width: 7
 crashes |>
   filter(num_casualties > 0) |>
   mutate(color = if_else(crash_day == "Sunday" | crash_day == "Saturday", 
          "red", "gray")) |>
   ggplot(aes(x = crash_time, group = crash_day)) +
-  geom_vline(xintercept = hm("9:00"), linetype = 3) +
-  geom_vline(xintercept = hm("17:00"), linetype = 3) +
   geom_density(color = "lightgray") +
   geom_density(
     data = filter(crashes, num_casualties > 0, 
                   crash_day == "Sunday" | crash_day == "Saturday"), 
     color = "red"
   ) +
+  geom_vline(xintercept = hm("9:00"), linetype = 3) +
+  geom_vline(xintercept = hm("17:00"), linetype = 3) +
   annotate("text", label = "9:00 am", color = "gray", angle = 90,
            x = hm("10:00"), y = 5e-06, hjust = "right", vjust = "bottom") +
   annotate("text", label = "5:00 pm", color = "gray", angle = 90,
@@ -427,17 +381,17 @@ crashes |>
 
 Of accidents with one or more casualties, those happening on Saturdays and
 Sundays appear to occur disproportionately late at night and with a notably
-smaller peak around 5:00 pm. While there is variance around the weekend, the
-general pattern stays the same between all seven days. To account for this, we
-will introduce a random effect based on the days of the week to allow 
-information sharing between them. We anticipate that our model's performance 
-will benefit from such a change, and this random effect will end up in the 
-final model after performance evaluation.
+smaller peak around 5:00 pm. Because of this difference, we constructed a new
+variable to denote whether or not an accident happens on a weekend or weekday. 
+We will build two models, one with an interaction term between the time of day
+and weekend/weekday and one without, and compare their performance before
+selecting a final model.
 
 ## Day of the year
 
 ```{r}
 #| label: viz-density-severity-day-of-year
+#| fig-height: 3
 crashes |>
   ggplot(aes(x = yday)) +
   geom_density(data = filter(crashes, severity == "no casualties"), 
@@ -466,6 +420,7 @@ of interest in our final model.
 
 ```{r}
 #| label: viz-hist-by-street
+#| include: false
 crashes |>
   group_by(borough) |>
   summarise(count = n()) |>
@@ -492,13 +447,18 @@ impacts by using borough in our final model.
 ## Zip codes
 ```{r}
 #| label: viz-zip-code-box
-crashes |>
+#| fig-height: 2
+zip_crash <- crashes |>
   group_by(zip_code) |>
   summarise(count = n(), casualties = sum(has_casualty)) |>
-  mutate(prop = casualties / count) |>
+  mutate(prop = casualties / count)
+
+zip_med <- median(zip_crash$prop)
+
+zip_crash |>
   ggplot(aes(x = prop)) +
-  geom_vline(xintercept = 0.1905, linetype = 3) +
-  annotate("text", label = "Median = 0.191", x = 0.2, y = 0.8, color = "gray",
+  geom_vline(xintercept = zip_med, linetype = 3) +
+  annotate("text", label = "Median = 0.186", x = 0.2, y = 0.8, color = "gray",
            fontface = "bold", hjust = "left") +
   geom_boxplot(varwidth = T, fill = "red", alpha = 0.5) +
   ylim(-1,1) +
@@ -517,7 +477,7 @@ crashes |>
 ```
 Building a box plot to observe the distribution of accident proportion by zip
 code, we see that casualty rates are approximately normally distributed about a
-median of 0.191. Because of the large absolute number of zip codes in the 
+median of 0.186. Because of the large absolute number of zip codes in the 
 dataset and the unlikely impact of a normally distributed proportion having a
 significant impact on the model, we will not use zip code as a predictor in the
 final model.
@@ -525,6 +485,7 @@ final model.
 ## Streets
 ```{r}
 #| label: viz-streets-hist
+#| fig-height: 3
 crashes |>
   group_by(on_street_name) |>
   summarise(count = n(), casualties = sum(has_casualty)) |>
@@ -566,6 +527,7 @@ model2 <- glm(has_casualty ~ yday + time_day + weekend_weekday +
 #| label: display-model-output-table
 out <- tidy(model1)
 form_out <- out |>
+  filter(p.value <= .05) |>
   mutate(term = str_replace_all(term, "time_day", "Time of Day: "),
          term = str_replace_all(term, "crash_day", "Weekday: "),
          term = str_replace_all(term, "factor1", "Factor 1: "),
@@ -577,28 +539,14 @@ form_out <- out |>
          Statistic = statistic, `P-value` = p.value)
 
 form_out |>
-  slice_head(n = 15) |>
   gt() |>
   fmt_number(columns = c(Coefficient, `Standard Error`, Statistic, `P-value`),
              decimals = 3, suffix = T) |>
   fmt_scientific(columns = !Predictor) |>
   gtsave("table1.pdf")
-
-form_out |>
-  slice_tail(n = 14) |>
-  gt() |>
-  fmt_number(columns = c(Coefficient, `Standard Error`, Statistic, `P-value`),
-             decimals = 3, suffix = T) |>
-  fmt_scientific(columns = !Predictor) |>
-  gtsave("table2.pdf")
 ```
 
-{{< pagebreak >}}
-
 ![Model Output](table1.pdf)
-![Model Output](table2.pdf)
-
-{{< pagebreak >}}
 
 # Results
 
