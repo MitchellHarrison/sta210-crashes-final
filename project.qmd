@@ -333,25 +333,21 @@ We can see from the visualizations below that vehicle type seems to have a signi
 
 ```{r}
 #| label: viz-prop-casualties-by-vtype1-and-vtype2
-
+#| fig-width: 7
 # vtype1
 crashes %>%
   filter(vtype1 != "Other/Unknown") %>%
   ggplot(aes(x = vtype1, fill = has_casualty)) +
-  geom_bar(position = "fill", color = "black") + 
-  scale_fill_manual(values = c("blue", "red"), labels = c("No", "Yes")) +
-  labs(x = "Vehicle Type", y = "Casualty Rate", fill = "Casualty", title = "Casualties Occur More Frequently in Accidents
-with Motorcycles or Non-Motor Vehicles", subtitle = "MVCs with Casualties based on Vehicle Type 1")
-
-# vtype2
-crashes %>%
-  filter(vtype2 != "None" & vtype2 != "Other/Unknown") %>%
-  ggplot(aes(x = vtype2, fill = has_casualty)) +
-  geom_bar(position = "fill", color = "black") + 
-  scale_fill_manual(values = c("blue", "red"), labels = c("No", "Yes")) +
-  labs(x = "Vehicle Type", y = "Casualty Rate", fill = "Casualty", title = "Casualties Occur More Frequently in Accidents
-with Motorcycles or Non-Motor Vehicles", subtitle = "MVCs with Casualties based on Vehicle Type 2")
-
+  geom_bar(position = "fill", alpha = 0.5, color = "black") + 
+  scale_fill_manual(values = c("lightgray", "red"), labels = c("No", "Yes")) +
+  theme_classic() +
+  labs(
+    x = NULL, 
+    y = "Casualty Rate", 
+    fill = "Casualty", 
+    title = "Motorcycles and non-motor vehicles have the highest casualty rate",
+    subtitle = "Casualty rate of MVCs in New York by vehicle involved"
+  )
 ```
 
 **Same here, I was trying to make charts of the casualty proportions of accidents by `factor1` and `factor2`. The gist is clear, but if you could clean them up a bit, *particularly the x-axis labels*, to make them look good that would be awesome.**
@@ -360,22 +356,24 @@ The visualizations below do not seem to show any one driver related error or iss
 
 ```{r}
 #| label: viz-prop-casualties-by-factor1-and-factor
-
+#| fig-width: 7
 # factor1
 crashes %>%
   filter(factor1 != "Other/Unknown") %>%
   ggplot(aes(x = factor1, fill = has_casualty)) +
-  geom_bar(position = "fill", color = "black") + 
-  scale_fill_manual(values = c("blue", "red"), labels = c("No", "Yes")) +
-  labs(x = "Factor Type", y = "Casualty Rate", fill = "Casualty", title = "No Clearly More Dangerous Driver Factor", subtitle = "MVCs with Casualties based on Factor Type 1")
-
-# factor2
-crashes %>%
-  filter(factor2 != "Other/Unknown") %>%
-  ggplot(aes(x = factor2, fill = has_casualty)) +
-  geom_bar(position = "fill", color = "black") + 
-  scale_fill_manual(values = c("blue", "red"), labels = c("No", "Yes")) +
-  labs(x = "Factor Type", y = "Casualty Rate", fill = "Casualty", title = "No Clearly More Dangerous Driver Factor", subtitle = "MVCs with Casualties based on Factor Type 2")
+  geom_bar(position = "fill", color = "black", alpha = 0.5) + 
+  scale_fill_manual(values = c("lightgray", "red"), labels = c("No", "Yes")) +
+  scale_x_discrete(
+    labels = c("Aggressive Driving", "Traffic Violations", 
+               "Impairment/Distraction", "Technical Failure")) +
+  theme_classic() +
+  labs(
+    x = NULL, 
+    y = "Casualty Rate", 
+    fill = "Casualty", 
+    title = "No contributing factor is disproportionally casualty-prone", 
+    subtitle = "MVCs with casualties based on cause of accident"
+  )
 ```
 
 To explore how timing might effect the occurrence of casualties, we explored the relationship between day of the week and casualty occurrence, finding that weekend MVC casualties were more heavily concentrated in the early morning hours than weekday MVC casualties. This was interesting as it provided some credence to the intuitive thought that early morning weekend drivers are more likely than early morning weekday drivers to be leaving parties/going out, therefore making them more likely to be impaired and get into a serious MVC. Additionally, the proportion of early morning (12 AM to 4 AM) weekend drivers with "Impairment/Distraction/Fatigue" listed as a factor was 0.2685617, fairly different from that of early morning weekday drivers, 0.1746032.
@@ -383,59 +381,15 @@ To explore how timing might effect the occurrence of casualties, we explored the
 ```{r}
 #| label: calculate-prop-of-weekend-weekday-earlymorn-intoxicated
 
-# weekend prop
-(crashes %>%
-  filter(weekend_weekday == "Weekend" & crash_time %in% c(00:00, 04:00) & factor1 == "Impairment/Distraction/Fatigue") %>%
-  count())/(crashes %>%
-  filter(weekend_weekday == "Weekend" & crash_time %in% c(00:00, 04:00)) %>%
-  count())
-
 # weekday prop
 (crashes %>%
   filter(weekend_weekday == "Weekday" & crash_time %in% c(00:00, 04:00) & factor1 == "Impairment/Distraction/Fatigue") %>%
   count())/(crashes %>%
   filter(weekend_weekday == "Weekday" & crash_time %in% c(00:00, 04:00)) %>%
   count())
-
 ```
 
 **I made another density plot using your code but with the `weekend_weekday` variable instead of individual days for this, we can use whichever but it seems a bit clearer with the latter in my opinion. See below:**
-
-```{r}
-#| label: viz-time-density
-#| fig-width: 7
-crashes |>
-  filter(num_casualties > 0) |>
-  mutate(color = if_else(crash_day == "Sunday" | crash_day == "Saturday", 
-         "red", "gray")) |>
-  ggplot(aes(x = crash_time, group = crash_day)) +
-  geom_density(color = "lightgray") +
-  geom_density(
-    data = filter(crashes, num_casualties > 0, 
-                  crash_day == "Sunday" | crash_day == "Saturday"), 
-    color = "red"
-  ) +
-  geom_vline(xintercept = hm("9:00"), linetype = 3) +
-  geom_vline(xintercept = hm("17:00"), linetype = 3) +
-  annotate("text", label = "9:00 am", color = "gray", angle = 90,
-           x = hm("10:00"), y = 5e-06, hjust = "right", vjust = "bottom") +
-  annotate("text", label = "5:00 pm", color = "gray", angle = 90,
-           x = hm("16:30"), y = 5e-06, hjust = "right", vjust = "bottom") +
-  annotate("text", color = "red", label = "Weekend", x = hm("00:20"), 
-           hjust = "left", fontface = "bold", y = 8e-06) +
-  annotate("text", color = "gray", label = "Mon. - Fri.", x = hm("00:20"), 
-           hjust = "left", fontface = "bold", y = 1e-06) +
-  scale_color_identity() +
-  theme_classic() +
-  labs(
-    x = "Time of crash",
-    y = "Density",
-    title = "Weekend casualties are disproportionately in the early morning",
-    subtitle = paste("Time density of NYC car accidents with injuries or",
-                     "fatalities by day of week"),
-    color = "Weekday"
-  )
-```
 
 ```{r}
 #| label: viz-time-density-with-weekend_weekday
@@ -477,7 +431,7 @@ We also visualized densities of casualty occurrence and non-occurrence by numeri
 
 ```{r}
 #| label: viz-density-severity-day-of-year
-#| fig-height: 3
+#| fig-width: 7
 crashes |>
   ggplot(aes(x = yday)) +
   geom_density(data = filter(crashes, severity == "no casualties"), 
@@ -501,27 +455,6 @@ Further analysis was done to explore whether zip code seemed to impact casualty 
 Lastly, we visualized the number of streets with
 
 **I dont think we need this plot below. To be honest, it shows that something like 300 streets have casualty rates around 0.5, which is pretty high and probably would indicate that we should include street somehow as a predictor...**
-
-```{r}
-#| label: viz-streets-hist
-#| fig-height: 3
-crashes |>
-  group_by(on_street_name) |>
-  summarise(count = n(), casualties = sum(has_casualty)) |>
-  
-  # apply LaPlace Succession here
-  mutate(count = count+1, prop = casualties / count) |>
-  
-  ggplot(aes(x = prop)) +
-  geom_histogram(bins = 20, fill = "red", alpha = 0.5, color = "black") +
-  theme_classic() +
-  labs(
-    x = "Proportion of accidents with casualties",
-    y = "Number of streets",
-    title = "Most streets have no casualties",
-    subtitle = "Distribution of NYC car accident casualty rates by street"
-  )
-```
 
 # Methodology
 
@@ -578,8 +511,18 @@ model2 <- glm(has_casualty ~ yday + time_day + weekend_weekday +
                 factor1 + vtype1 + factor2 + vtype2, 
               data = crashes, family = "binomial")
 
-summary(model1)
-summary(model2)
+```
+
+# Model 1
+```{r}
+#| label: model1-tidy
+tidy(model1)
+```
+
+## Model 2
+```{r}
+#| label: model2-tidy
+tidy(model2)
 ```
 
 ```{r}
@@ -625,12 +568,10 @@ Overall conclusions from analysis are clearly described, and the model results a
 
 #### a) Sample code for sampling/exportation of large original dataset
 
-```{r}
-
+```
 crashes_original <- read_csv(<filename>)
 crashes <- sample_n(crashes_original, 10000)
 write_csv(crashes, <"crashes">)
-
 ```
 
 ## 2. Exploratory Data Analysis
@@ -640,6 +581,7 @@ write_csv(crashes, <"crashes">)
 ```{r}
 #| label: viz-zip-code-box
 #| fig-height: 2
+#| fig-width: 7
 zip_crash <- crashes |>
   group_by(zip_code) |>
   summarise(count = n(), casualties = sum(has_casualty)) |>
@@ -672,12 +614,13 @@ zip_crash |>
 
 ```{r}
 #| label: viz-hist-by-street
+#| fig-width: 7
 crashes |>
   group_by(borough) |>
   summarise(count = n()) |>
   mutate(color = if_else(is.na(borough), "red", "lightgray")) |>
   ggplot(aes(x = borough, y = count, fill = color)) +
-  geom_col() +
+  geom_col(alpha = 0.5, color = "black") +
   scale_fill_identity() +
   theme_classic() +
   labs(
