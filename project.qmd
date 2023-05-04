@@ -382,15 +382,28 @@ crashes %>%
   labs(x = "Factor Type", y = "Casualty Rate", fill = "Casualty", title = "No Clearly More Dangerous Driver Factor", subtitle = "MVCs with Casualties based on Factor Type 2")
 ```
 
-To explore how timing might effect the occurrence of casualties, we explored the relationship between day of the week and casualty occurrence, finding that weekend MVC casualties were more heavily concentrated in the early morning hours than weekday MVC casualties. This was interesting as it provided some credence to the intuitive
+To explore how timing might effect the occurrence of casualties, we explored the relationship between day of the week and casualty occurrence, finding that weekend MVC casualties were more heavily concentrated in the early morning hours than weekday MVC casualties. This was interesting as it provided some credence to the intuitive thought that early morning weekend drivers are more likely than early morning weekday drivers to be leaving parties/going out, therefore making them more likely to be impaired and get into a serious MVC. Additionally, the proportion of early morning (12 AM to 4 AM) weekend drivers with "Impairment/Distraction/Fatigue" listed as a factor was 0.2685617, fairly different from that of early morning weekday drivers, 0.1746032.
 
 ```{r}
+#| label: calculate-prop-of-weekend-weekday-earlymorn-intoxicated
 
-crashes %>%
-  group_by(weekend_weekday) %>%
-  (count(factor1 == "Impairment/Distraction/Fatigue"))/count(nrow(crashes))
+# weekend prop
+(crashes %>%
+  filter(weekend_weekday == "Weekend" & crash_time %in% c(00:00, 04:00) & factor1 == "Impairment/Distraction/Fatigue") %>%
+  count())/(crashes %>%
+  filter(weekend_weekday == "Weekend" & crash_time %in% c(00:00, 04:00)) %>%
+  count())
+
+# weekday prop
+(crashes %>%
+  filter(weekend_weekday == "Weekday" & crash_time %in% c(00:00, 04:00) & factor1 == "Impairment/Distraction/Fatigue") %>%
+  count())/(crashes %>%
+  filter(weekend_weekday == "Weekday" & crash_time %in% c(00:00, 04:00)) %>%
+  count())
 
 ```
+
+**I made another density plot using your code but with the `weekend_weekday` variable instead of individual days for this, we can use whichever but it seems a bit clearer with the latter in my opinion. See below:**
 
 ```{r}
 #| label: viz-time-density
@@ -464,6 +477,8 @@ crashes |>
   )
 ```
 
+We also visualized densities of casualty occurrence and non-occurrence by numerical day of the year. We observed proportional casualty density to be lower in the colder winter months, and higher in the summer and fall.
+
 ```{r}
 #| label: viz-density-severity-day-of-year
 #| fig-height: 3
@@ -486,6 +501,10 @@ crashes |>
 ```
 
 Further analysis was done to explore whether zip code seemed to impact casualty rates (**Appendix 2a**), but this only revealed that these rates were approximately normally distributed. We also visualized MVC count by borough (**Appendix 2b**), seeing no significant trend other than high missingness for `borough` data.
+
+Lastly, we visualized the number of streets with
+
+**I dont think we need this plot below. To be honest, it shows that something like 300 streets have casualty rates around 0.5, which is pretty high and probably would indicate that we should include street somehow as a predictor...**
 
 ```{r}
 #| label: viz-streets-hist
