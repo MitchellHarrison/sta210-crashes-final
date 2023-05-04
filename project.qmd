@@ -68,7 +68,6 @@ library(gt)
 crashes <- read_csv("data/crashes_10k.csv")
 ```
 
-<<<<<<< HEAD
 # Methodology
 To explore the factors that lead to casualties in car accidents, we will
 construct a binary logistic regression model. For the purposes of this analysis,
@@ -133,9 +132,6 @@ were distributed around 0.25. Because of the massive complexity that adding a
 1000-level categorical variable would add to our model, combined with an
 unremarkable distribution of accident proportion after applying LaPlace
 succession, we are not including streets as a predictor in our final model.
-=======
-# Data Wrangling
->>>>>>> 5a5197ee1fba5f7b9470bbbdd9135ef442dc1dcb
 
 ```{r}
 #| label: clean-data
@@ -315,16 +311,9 @@ crashes <- crashes %>%
          vtype2 = as.factor(vtype2))
 ```
 
-<<<<<<< HEAD
-# Exploratory Analysis
-
-## Time of Day
-=======
 ## Exploratory Analysis
 
 ### Time of Day
-
->>>>>>> 5a5197ee1fba5f7b9470bbbdd9135ef442dc1dcb
 ```{r}
 #| label: viz-time-density
 #| fig-width: 7
@@ -361,20 +350,9 @@ crashes |>
   )
 ```
 
-<<<<<<< HEAD
-Of accidents with one or more casualties, those happening on Saturdays and
-Sundays appear to occur disproportionately late at night and with a notably
-smaller peak around 5:00 pm. Because of this difference, we constructed a new
-variable to denote whether or not an accident happens on a weekend or weekday. 
-We will build two models, one with an interaction term between the time of day
-and weekend/weekday and one without, and compare their performance before
-selecting a final model.
-=======
 Of accidents with one or more casualties, those happening on Saturdays and Sundays appear to occur disproportionately late at night and with a notably smaller peak around 5:00 pm. While there is variance around the weekend, the general pattern stays the same between all seven days. To account for this, we will introduce a random effect based on the days of the week to allow information sharing between them. We anticipate that our model's performance will benefit from such a change, and this random effect will end up in the final model after performance evaluation.
->>>>>>> 5a5197ee1fba5f7b9470bbbdd9135ef442dc1dcb
 
 ### Day of the year
-
 ```{r}
 #| label: viz-density-severity-day-of-year
 #| fig-height: 3
