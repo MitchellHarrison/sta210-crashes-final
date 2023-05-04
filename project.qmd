@@ -10,9 +10,7 @@ execute:
 ---
 
 # Introduction
-
 ## Dataset
-
 Our dataset is composed of harvested and compiled data from New York City Police
 Department (NYPD) open access data on all police reported motor vehicle
 collisions (MVC) in all five boroughs of New York City from July 1st, 2012
@@ -97,15 +95,71 @@ crashes <- read_csv("data/crashes_10k.csv")
 ```
 
 # Methodology
+To explore the factors that lead to casualties in car accidents, we will
+construct a binary logistic regression model. For the purposes of this analysis,
+we define "casualties" as injuries or fatalities, not just fatalities. We are
+only examining accidents involving two or fewer vehicles, which account for over
+90% of accidents while avoiding the complexities involved with correcting for
+several vehicle types at once.
 
--   MCAR
--   2 or fewer vehicles only
--   response: person casualty (injured + killed)
--   removed rows with \>2 vehicles
--   add column to track whether or not there are injuries/fatalities 
+We anticipate that the vehicle type involved in the accident will play a
+significant role, but our dataset has over 100 individual vehicle types. To
+simplify our model and avoid overfitting, we consolidated these into five larger
+categories: passenger vehicles, commercial vehicles, motorcycles, non-motor
+vehicles, and others/unknown. We also anticipated a significant impact on
+accident severity by reason for the accident. Specifically, we wanted to
+investigate impaired driving to other causes. Like the vehicle type, however, we
+risked overfitting and over-complicating our model because of the sheer number 
+of accident causes. Like our vehicle type variable, we consolidated accident
+causes into five categories: impaired, distraction/inattention/fatigue,
+aggressive/reckless driving, failure to obey traffic signs/signals/rules,
+technical/mechanical failures, and other/unknown.
+
+After consolidating categories, we investigate both the time of day and the day
+of the year at which an accident occurred. Grouping by day of the week, we find
+that the time at which injuries with casualties occur varies, with fewer
+casualties around 5:00 pm and later at night during the weekend. Because of this
+difference, we include both the time of day and weekday in our model.
+
+The day of the year (as measured by the number of days after January 1st, i.e.,
+"Julian Day") is also included. During exploratory analysis, we found that
+accidents had disproportionately few casualties in the winter months and more
+around the middle of the year. Because of this difference, we include the day of
+the year as a predictor in our model.
+
+We hoped to include the borough as a predictor but could not. So many
+observations were missing a value for the borough that including it in our
+complete-case model would have dropped a substantial portion of our overall
+dataset. If we could confirm that the borough data was MCAR, then we wouldn't be
+concerned about the final accuracy of our model. However, because we could not
+verify the missingness mechanism (and due to the general rarity of MCAR data 
+that isn't explicitly designed as such), we do not include the borough in which
+the accident occurs in our model.
+
+While we hoped that the zip code might provide valuable explanatory insight, we
+found two issues with its inclusion in our model: first, there are 100 unique 
+zip codes in the dataset. As a categorical variable, this would make our model
+much more complex to calculate and communicate. Second, the proportion of
+accidents with casualties is approximately normally distributed around a median
+of 1.191. Therefore, specific zip codes are both unlikely to make an appreciable
+difference in an explanatory model and are highly likely to increase its
+complexity dramatically. Thus, we do not include zip code in our final model.
+
+We also thought that some streets could have a disproportionately high casualty
+rate and thereby have a statistically significant impact on our model. However,
+we ran into many of the same problems that we did with zip codes. In the 10,000
+observations we selected from the larger dataset, there were over 1000 unique
+streets, many of which had minimal accidents. To combat these small number of
+observations, we used LaPlace succession, adding one to each of the number of
+accidents and making it a non-casualty accident. This technique allowed us to
+correct for low accident counts. After applying LaPlace succession, we found 
+that the large majority of streets had no casualties at all, and the remainder
+were distributed around 0.25. Because of the massive complexity that adding a
+1000-level categorical variable would add to our model, combined with an
+unremarkable distribution of accident proportion after applying LaPlace
+succession, we are not including streets as a predictor in our final model.
 
 # Data Wrangling
-
 ```{r}
 #| label: clean-data
 crashes <- crashes |>
@@ -300,14 +354,14 @@ crashes |>
   mutate(color = if_else(crash_day == "Sunday" | crash_day == "Saturday", 
          "red", "gray")) |>
   ggplot(aes(x = crash_time, group = crash_day)) +
+  geom_vline(xintercept = hm("9:00"), linetype = 3) +
+  geom_vline(xintercept = hm("17:00"), linetype = 3) +
   geom_density(color = "lightgray") +
   geom_density(
     data = filter(crashes, num_casualties > 0, 
                   crash_day == "Sunday" | crash_day == "Saturday"), 
     color = "red"
   ) +
-  geom_vline(xintercept = hm("9:00"), linetype = 3) +
-  geom_vline(xintercept = hm("17:00"), linetype = 3) +
   annotate("text", label = "9:00 am", color = "gray", angle = 90,
            x = hm("10:00"), y = 5e-06, hjust = "right", vjust = "bottom") +
   annotate("text", label = "5:00 pm", color = "gray", angle = 90,
@@ -418,12 +472,44 @@ crashes |>
     axis.line.y = element_blank()
   )
 ```
+Building a box plot to observe the distribution of accident proportion by zip
+code, we see that casualty rates are approximately normally distributed about a
+median of 0.191. Because of the large absolute number of zip codes in the 
+dataset and the unlikely impact of a normally distributed proportion having a
+significant impact on the model, we will not use zip code as a predictor in the
+final model.
 
 ## Streets
+```{r}
+#| label: viz-streets-hist
+crashes |>
+  group_by(on_street_name) |>
+  summarise(count = n(), casualties = sum(has_casualty)) |>
+  
+  # apply LaPlace Succession here
+  mutate(count = count+1, prop = casualties / count) |>
+  
+  ggplot(aes(x = prop)) +
+  geom_histogram(bins = 20, fill = "red", alpha = 0.5, color = "black") +
+  theme_classic() +
+  labs(
+    x = "Proportion of accidents with casualties",
+    y = "Number of streets",
+    title = "Most streets have no casualties",
+    subtitle = "Distribution of NYC car accident casualty rates by street"
+  )
+```
+After applying LaPlace succession, we see that the vast majority of accidents 
+had no casualties, and most others were distributed around 0.25, with another
+peak around 0.5, partially due to the mathematical consequences of LaPlace
+succession. Because so many streets followed an unremarkable distribution and
+because adding street as a predictor would introduce massive model complexity, 
+we will not use the street on which an accident occurs as a predictor in the
+final model.
 
 # Model Construction
 ```{r}
-#| label: model-initial
+#| label: construct-model
 model1 <- glm(has_casualty ~ yday + time_day + + crash_day +
                 factor1 + factor2 + vtype1 + vtype2, 
               data = crashes, family = "binomial")
