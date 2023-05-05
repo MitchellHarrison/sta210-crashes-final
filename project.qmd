@@ -452,17 +452,19 @@ This is where you will output the final model with any relevant model fit statis
 The model fit is clearly assessed, and interesting findings from the model are clearly described. Interpretations of model coefficients are used to support the key findings and conclusions, rather than merely listing the interpretation of every model coefficient. If the primary modeling objective is prediction, the model's predictive power is thoroughly assessed.
 
 ## What we have
+
 ```{r}
 #| label: final model output
 # model 2: final model
 finalmodel <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
                  yday + factor1 + factor2, 
               data = crashes, family = "binomial")
-# print final model
-print(tidy(finalmodel), n = 50)
 
-model_2_aug <- augment(model_2) |>
-  mutate(prob = exp(.fitted)/(1+exp(.fitted)))
+finalmodel_tidy <- tidy(finalmodel)
+
+# print final model
+print(finalmodel_tidy)
+
 ```
 
 # Discussion
@@ -551,7 +553,6 @@ crashes |>
 
 #### a) Likelihood-ratio test between models considered
 
-
 ```{r}
 #| label: build-models and likelihood ratio test
 # model 1: base model
@@ -598,7 +599,20 @@ model_2_aug |>
   )
 ```
 
-{{< pagebreak >}} 
+#### b) Probabilities from Log(odds) slope estimates
 
-# 5. Works Cited 
+```{r}
+
+finalmodel_tidy <- finalmodel_tidy %>%
+  mutate(prob = exp(estimate)/(1+exp(estimate)))
+
+finalmodel_tidy %>%
+  dplyr::select(term, prob)
+  
+```
+
+{{< pagebreak >}}
+
+# 5. Works Cited
+
 Department of Health. All Injuries in New York State. (n.d.). Retrieved May 4, 2023, from https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm
