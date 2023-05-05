@@ -453,22 +453,13 @@ The model fit is clearly assessed, and interesting findings from the model are c
 
 ## What we have
 ```{r}
-#| label: build-models
-# base model
-model_1 <- glm(has_casualty ~ vtype1 + vtype2 + time_day +
-                    weekend_weekday + yday, 
-              data = crashes, family = "binomial")
-
-# model 2: add `factor1` and `factor2`
-model_2 <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
+#| label: final model output
+# model 2: final model
+finalmodel <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
                  yday + factor1 + factor2, 
               data = crashes, family = "binomial")
-
-# model 2: add `weekend_weekday*time_day`
-model_3 <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
-                 yday + factor1 + factor2 + weekend_weekday*time_day, 
-              data = crashes, family = "binomial")
-print(tidy(model_2), n = 50)
+# print final model
+print(tidy(finalmodel), n = 50)
 ```
 
 # Discussion
@@ -559,7 +550,21 @@ crashes |>
 
 
 ```{r}
-#| label: anova-test
+#| label: build-models and likelihood ratio test
+# model 1: base model
+model_1 <- glm(has_casualty ~ vtype1 + vtype2 + time_day +
+                    weekend_weekday + yday, 
+              data = crashes, family = "binomial")
+
+# model 2: add `factor1` and `factor2`
+model_2 <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
+                 yday + factor1 + factor2, 
+              data = crashes, family = "binomial")
+
+# model 3: add `weekend_weekday*time_day`
+model_3 <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
+                 yday + factor1 + factor2 + weekend_weekday*time_day, 
+              data = crashes, family = "binomial")
 # Perform likelihood ratio test
 anova(model_1, model_2, model_3, test = "Chisq")
 
