@@ -319,7 +319,7 @@ crashes %>%
   )
 ```
 
-A similar analysis (listed in appendix 2c) shows no significant difference in casualty rates among categories.
+A similar analysis (**Appendix 2c**) shows no significant difference in casualty rates among categories.
 
 To explore how timing might effect the occurrence of casualties, we explored the relationship between day of the week and casualty occurrence, finding that weekend MVC casualties were more heavily concentrated in the early morning hours than weekday MVC casualties. This was interesting as it provided some credence to the intuitive thought that early morning weekend drivers are more likely than early morning weekday drivers to be leaving parties/going out, therefore making them more likely to be impaired and get into a serious MVC. Additionally, the proportion of early morning (12 AM to 4 AM) weekend drivers with "Impairment/Distraction/Fatigue" listed as a factor was 0.2685617, fairly different from that of early morning weekday drivers, 0.1746032.
 
@@ -437,18 +437,25 @@ finalmodel_tidy %>%
   print(n=50)
 ```
 
-# Discussion
-Our primary research concern is determining which characteristics of a MVC's timing and participants involved make casualties more likely. 
+The final model fit can be assessed by the ROC AUC estimate (**Appendix 4a**). We found an ROC AUC of 0.7073, indicating that the model is fairly well fitted to our data for predicting MVS that did and did not result in casualties. This suggests that the model may be somewhat useful for predicting the likelihood of casualties in MVCs. However, our research question was designed to asses the extent to which certain variables are associated with MVC casualty occurrence, not primarily with predicting said occurrences.
 
-The model output shows that vehicle type significantly impacts the odds of a casualty occurring. Specifically, Motorcycles and Non-Motor Vehicles are associated with a *much* higher likelihood of a casualty than Passenger vehicles. Additionally, both time of day and weekday/weekend variance has a statistically significant impact on the probability of a casualty. Some contributing factors have explanatory power, with Failure to Obey Traffic Signs/Signals/Rules associated with a higher likelihood of a casualty.
+Our model output shows a number of interesting findings. For ease of interpretation in terms of odds ratios, we added a column of odds ratios for each slope, the exponentiated logit slope estimates. Statistical significance for a slope estimate was defined as having an associated p-value \< 0.05.
+
+Regarding vehicle type, all categories of the variable had statistically significant slope estimates, and the reference category for all was "Commercial vehicles." As expected based on EDA, the slopes for "Motorcycles" and "Non-Motor Vehicle" were the most significant and carried the highest odds ratios. Contextually, comparing two MVCs in NYC, one between two commercial vehicles and one where the first motorist is on a motorcycle and the second in a commercial vehicle, we predict that the MVC involving the motorcyclist has, incredibly, 16.482 times the odds of resulting in a casualty as compared to the former, all other model predictors held constant.
+
+In terms of timing, numerical day of the year was not found to be significantly associated with casualty occurrence, nor was whether the MVC occurred on a weekend. MVC occurrence in the evening or nighttime (as compared to morning) was significantly associated with casualty occurrence. For two MVCs in NYC, one occurring in the morning and one at night, we predict that the latter has 1.6 times the odds of resulting in a casualty, all all other model predictors held constant.
+
+None of the second driver factors were significantly related to casualty occurrence, however, the first driver failing to obey traffic signs/signals/rules or being impaired/distracted/fatigued (as compared to driving aggressively or recklessly) were both significantly associated with casualty occurrence, carrying odds ratios of 1.697 and 1.22, respectively.
+
+# Discussion
+
+Our primary research concern is determining which characteristics of a MVC's timing and participants involved make casualties more likely. The model output shows that vehicle type significantly impacts the odds of a casualty occurring. Specifically, Motorcycles and Non-Motor Vehicles are associated with a *much* higher likelihood of a casualty than Passenger vehicles. Additionally, both time of day and weekday/weekend variance has a statistically significant impact on the probability of a casualty.
 
 However, the day of the year is *not* a statistically significant predictor of casualties. It should be noted that even though secondary contributing factors are included in the model, none of them have a statistically significant effect on whether or not an MVC resulted in a casualty.
 
 Our final model shows that several factors play a role in determining whether an MVC in New York City results in any casualties. The variables that significantly contribute to the likelihood of a casualty include the types of vehicles involved, the time of day, and whether the MVC occurred on a weekend.
 
-However, there are several limitations to this analysis that must be acknowledged. Firstly, the data used in this study was harvested and compiled from NYPD open access data, which means that the reliability and validity of the data may not be ideal. Furthermore, there is a possibility that some incidents of MVCs were not reported to the police, which could cause unaccounted missingness. It is also worth noting that the dataset is limited to New York City and may not be generalizable to other metropolitan areas. Future studies should attempt to replicate this analysis in other urban areas to determine if the findings are consistent across different locations.
-
-Additionally, while the model provides insight into which characteristics of an MVC contribute to a higher likelihood of a casualty, it does not account for external factors that may have an impact on the likelihood of an MVC occurring in the first place. For example, weather conditions, road quality, and traffic volume could all contribute to the likelihood of an MVC occurring and should be considered in future analyses. The study could also benefit from including more detailed information about the drivers involved in the MVCs, such as age, gender, and driving experience, as these variables may also contribute to the likelihood of a casualty.
+However, there are several limitations to this analysis that must be acknowledged. Firstly, the data used in this study was harvested and compiled from NYPD open access data, which means that the reliability and validity of the data may not be ideal, with some incidents of MVCs potentially not reported. It is also worth noting that the dataset is limited to New York City and may not be generalizable to other metropolitan areas. Future studies should attempt to replicate this analysis in other urban areas to determine if the findings are consistent across different locations.
 
 Finally, the study's limitations must be considered when interpreting the results of the analysis. While the model provides statistical evidence to support the hypothesis that certain characteristics of an MVC increase the likelihood of a casualty, it is important to note that correlation does not necessarily imply causation. Additionally, the statistical analysis used in this study assumes that the data meets certain assumptions, such as independence and linearity, which may not be valid in all cases.
 
@@ -525,6 +532,7 @@ crashes |>
 ```
 
 #### c) Proportion of casualties by contributing factor
+
 ```{r}
 #| label: viz-prop-casualties-by-factor1-and-factor
 #| fig-width: 7
@@ -546,7 +554,6 @@ crashes %>%
     subtitle = "MVCs with casualties based on cause of accident"
   )
 ```
-
 
 ## 3. Methodology
 
@@ -596,19 +603,6 @@ model_2_aug |>
     prob,
     event_level = "second"
   )
-```
-
-#### b) Odds Ratios and Probabilities from Log(odds) slope estimates
-
-```{r}
-#| label: Probs-from-model
-finalmodel_tidy <- finalmodel_tidy %>%
-  mutate(prob = exp(estimate)/(1+exp(estimate)),
-         odds = exp(estimate))
-
-finalmodel_tidy %>%
-  dplyr::select(term, odds, prob, p.value)
-  
 ```
 
 {{< pagebreak >}}
