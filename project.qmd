@@ -43,6 +43,7 @@ library(tidyverse)
 library(tidymodels)
 library(lubridate)
 library(gt)
+library(Stat2Data)
 ```
 
 ```{r}
@@ -444,12 +445,12 @@ We are very interested in the time status of MVCs and how that may affect casual
 
 We hoped to include `borough` as a predictor but could not due to high missingness. We also considered using `zip_code`, but this variable had over 100 unique levels and the proportion of accidents with casualties by zip code is approximately normally distributed around a median of 1.191, so we would not expect this to be a useful predictor.
 
-We constructed and compared 3 models using a likelihood ratio test to select our final model, each with `has_casualty` as the response variable. Predictors in model 1 (the base model) are `vtype1`, `vtype2`, `time_day`, `weekend_weekday`, and `yday`, with model 2 adding `factor1` and `factor2`, and model 3 adding `weekend_weekday*time_day` to model 2.
+We constructed and compared 3 models using a likelihood ratio test at the $\alpha$ = 0.05 significance level to select our final model, each with `has_casualty` as the response variable. Predictors in `model_1` (the base model) are `vtype1`, `vtype2`, `time_day`, `weekend_weekday`, and `yday`, `model_2` adds `factor1` and `factor2`, and `model_3` adds `weekend_weekday*time_day` to `model_2`.
 
 ```{r}
 #| label: likelihoodratio
 # base model
-model_base <- glm(has_casualty ~ vtype1 + vtype2 + time_day +
+model_1 <- glm(has_casualty ~ vtype1 + vtype2 + time_day +
                     weekend_weekday + yday, 
               data = crashes, family = "binomial")
 
@@ -464,9 +465,11 @@ model_3 <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
               data = crashes, family = "binomial")
 
 # Perform likelihood ratio test
-anova(model_base, model_2, model_3, test = "Chisq")
+anova(model_1, model_2, model_3, test = "Chisq")
 
 ```
+
+Based on our likelihood ratio test (output shown in **Appendix 3a**), `model_2` fits our data better than model 1, while the difference between `model_2` and `model_3` is insignificant. We move forward with `model_2` (since it has fewer predictors than `model_3`) and test assumptions of independence and linearity.
 
 # Results
 
@@ -481,6 +484,7 @@ The model fit is clearly assessed, and interesting findings from the model are c
 ## What we have
 
 ## ROC/AUC
+
 ```{r}
 #| label: roc-auc
 model_aug <- augment(model_2) |>
@@ -494,8 +498,6 @@ model_aug |>
     event_level = "second"
   )
 ```
-
-
 
 # Discussion
 
@@ -579,8 +581,10 @@ crashes |>
   )
 ```
 
-#### c.
+## 3. Methodology
 
-{{< pagebreak >}} 
-# Works Cited 
-Department of Health. All Injuries in New York State. (n.d.). Retrieved May 4, 2023, from https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm
+#### a) Likelihood-ratio test between models considered
+
+## 4. Works Cited
+
+{{< pagebreak >}} # Works Cited Department of Health. All Injuries in New York State. (n.d.). Retrieved May 4, 2023, from https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm
