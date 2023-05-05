@@ -460,6 +460,9 @@ finalmodel <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
               data = crashes, family = "binomial")
 # print final model
 print(tidy(finalmodel), n = 50)
+
+model_2_aug <- augment(model_2) |>
+  mutate(prob = exp(.fitted)/(1+exp(.fitted)))
 ```
 
 # Discussion
