@@ -455,18 +455,7 @@ The model fit is clearly assessed, and interesting findings from the model are c
 
 ## ROC/AUC
 
-```{r}
-#| label: roc-auc
-model_aug <- augment(model_2) |>
-  mutate(prob = exp(.fitted)/1+exp(.fitted),
-         pred_leg = if_else(prob > 0.5, T, F))
-
-model_aug |>
-  roc_auc(
-    truth = as.factor(has_casualty),
-    prob,
-    event_level = "second"
-  )
+```{}
 ```
 
 # Discussion
@@ -585,6 +574,24 @@ emplogitplot1(has_casualty ~ (yday), data = crashes, ngroups = "all")
 
 ```
 
-## 4. Works Cited
+## 4. Results
+
+#### a) ROC Assessment
+
+```{r}
+#| label: roc-auc
+model_2_aug <- augment(model_2) |>
+  mutate(prob = exp(.fitted)/1+exp(.fitted),
+         pred_leg = if_else(prob > 0.5, T, F))
+
+model_2_aug |>
+  roc_auc(
+    truth = as.factor(has_casualty),
+    prob,
+    event_level = "second"
+  )
+```
+
+## 5. Works Cited
 
 {{< pagebreak >}} # Works Cited Department of Health. All Injuries in New York State. (n.d.). Retrieved May 4, 2023, from https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm
