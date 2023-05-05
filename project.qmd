@@ -462,10 +462,17 @@ finalmodel <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
 
 finalmodel_tidy <- tidy(finalmodel)
 
-# print final model
-print(finalmodel_tidy)
+# add an odds column to final model output by exponentiating slope estimates
+finalmodel_tidy <- finalmodel_tidy %>%
+  mutate(odds = exp(estimate))
+
+# print final model with odds included
+finalmodel_tidy %>%
+  dplyr::select(term, estimate, odds, std.error, statistic, p.value)
 
 ```
+
+
 
 # Discussion
 
