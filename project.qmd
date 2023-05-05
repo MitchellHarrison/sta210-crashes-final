@@ -452,10 +452,23 @@ This is where you will output the final model with any relevant model fit statis
 The model fit is clearly assessed, and interesting findings from the model are clearly described. Interpretations of model coefficients are used to support the key findings and conclusions, rather than merely listing the interpretation of every model coefficient. If the primary modeling objective is prediction, the model's predictive power is thoroughly assessed.
 
 ## What we have
+```{r}
+#| label: build-models
+# base model
+model_1 <- glm(has_casualty ~ vtype1 + vtype2 + time_day +
+                    weekend_weekday + yday, 
+              data = crashes, family = "binomial")
 
-## ROC/AUC
+# model 2: add `factor1` and `factor2`
+model_2 <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
+                 yday + factor1 + factor2, 
+              data = crashes, family = "binomial")
 
-```{}
+# model 2: add `weekend_weekday*time_day`
+model_3 <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
+                 yday + factor1 + factor2 + weekend_weekday*time_day, 
+              data = crashes, family = "binomial")
+print(tidy(model_2), n = 50)
 ```
 
 # Discussion
@@ -544,23 +557,9 @@ crashes |>
 
 #### a) Likelihood-ratio test between models considered
 
+
 ```{r}
-#| label: likelihoodratio
-# base model
-model_1 <- glm(has_casualty ~ vtype1 + vtype2 + time_day +
-                    weekend_weekday + yday, 
-              data = crashes, family = "binomial")
-
-# model 2: add `factor1` and `factor2`
-model_2 <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
-                 yday + factor1 + factor2, 
-              data = crashes, family = "binomial")
-
-# model 2: add `weekend_weekday*time_day`
-model_3 <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
-                 yday + factor1 + factor2 + weekend_weekday*time_day, 
-              data = crashes, family = "binomial")
-
+#| label: anova-test
 # Perform likelihood ratio test
 anova(model_1, model_2, model_3, test = "Chisq")
 
@@ -571,7 +570,6 @@ anova(model_1, model_2, model_3, test = "Chisq")
 ```{r}
 #| label: emplogit
 emplogitplot1(has_casualty ~ (yday), data = crashes, ngroups = "all")
-
 ```
 
 ## 4. Results
@@ -592,6 +590,7 @@ model_2_aug |>
   )
 ```
 
-## 5. Works Cited
+{{< pagebreak >}} 
 
-{{< pagebreak >}} # Works Cited Department of Health. All Injuries in New York State. (n.d.). Retrieved May 4, 2023, from https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm
+# 5. Works Cited 
+Department of Health. All Injuries in New York State. (n.d.). Retrieved May 4, 2023, from https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm
