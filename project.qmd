@@ -469,15 +469,31 @@ print(finalmodel_tidy)
 
 # Discussion
 
-## Instructions:
+## **Instructions:**
 
 In this section you'll include a summary of what you have learned about your research question along with statistical arguments supporting your conclusions. In addition, discuss the limitations of your analysis and provide suggestions on ways the analysis could be improved. Any potential issues pertaining to the reliability and validity of your data and appropriateness of the statistical analysis should also be discussed here. Lastly, this section will include ideas for future work.
 
-### Grading criteria
+### **Grading criteria**
 
 Overall conclusions from analysis are clearly described, and the model results are put into the larger context of the subject matter and original research question. There is thoughtful consideration of potential limitations of the data and/or analysis, and ideas for future work are clearly described.
 
-## What we have
+## **What we have**
+
+**Our primary research concern is determining which characteristics of a MVC's timing and participants involved make casualties more likely.\
+\
+**The model output shows that the variables **vtype1** and **vtype2** have statistically significant coefficients, indicating that they are important predictors of whether or not an MVC resulted in a casualty. Specifically, Motorcycles and Non-Motor Vehicle types of **vtype1** and **vtype2** are associated with a higher likelihood of a casualty than Passenger vehicles. Also, **time_day** and **weekend_weekday** are significant predictors of casualties in MVCs. **factor1** has some predictive power, with Failure to Obey Traffic Signs/Signals/Rules associated with a higher likelihood of a casualty.
+
+However, the variable **yday** is not a statistically significant predictor of casualties. It should be noted that even though **factor2** is included in the model, none of its categories have a statistically significant effect on whether or not an MVC resulted in a casualty.\
+\
+Our final model shows that several factors play a role in determining whether an MVC in New York City results in any casualties. The variables that significantly contribute to the likelihood of a casualty include the types of vehicles involved (all categories of vtype1 and vtype2), , the time of day (time_day), and whether the MVC occurred on a weekend (weekend_weekday). While yday and factor1 are also included in the model, they appear to have less influence on the likelihood of a casualty.
+
+However, there are several limitations to this analysis that must be acknowledged. Firstly, the data used in this study was harvested and compiled from NYPD open access data, which means that the reliability and validity of the data may not be ideal. Furthermore, there is a possibility that some incidents of MVCs were not reported to the police, which could bias the data in unforeseen ways. It is also worth noting that the dataset is limited to New York City and may not be generalizable to other urban areas. Future studies should attempt to replicate this analysis in other urban areas to determine if the findings are consistent across different locations.
+
+Additionally, while the model provides insight into which characteristics of an MVC contribute to a higher likelihood of a casualty, it does not account for external factors that may have an impact on the likelihood of an MVC occurring in the first place. For example, weather conditions, road quality, and traffic volume could all contribute to the likelihood of an MVC occurring and should be considered in future analyses. The study could also benefit from including more detailed information about the drivers involved in the MVCs, such as age, gender, and driving experience, as these variables may also contribute to the likelihood of a casualty.
+
+Finally, the study's limitations must be considered when interpreting the results of the analysis. While the model provides statistical evidence to support the hypothesis that certain characteristics of an MVC increase the likelihood of a casualty, it is important to note that correlation does not necessarily imply causation. Additionally, the statistical analysis used in this study assumes that the data meets certain assumptions, such as independence and linearity, which may not be valid in all cases.
+
+As for future work, the analysis could be improved by expanding the dataset to include more recent data and by collecting more detailed information on the variables included in the model. Future studies could also attempt to identify which specific combinations of variables are most strongly associated with a higher likelihood of a casualty, rather than treating each variable as an independent factor. Additionally, the study could benefit from including external factors such as weather conditions and traffic volume, as mentioned earlier. Overall, further investigation is needed to fully understand the complex relationship between MVC characteristics and casualty likelihood.
 
 {{< pagebreak >}}
 
