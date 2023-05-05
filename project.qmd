@@ -400,6 +400,7 @@ We also visualized densities of casualty occurrence and non-occurrence by numeri
 ```{r}
 #| label: viz-density-severity-day-of-year
 #| fig-width: 7
+#| fig-height: 2.8
 crashes |>
   ggplot(aes(x = yday)) +
   geom_density(data = filter(crashes, severity == "no casualties"), 
