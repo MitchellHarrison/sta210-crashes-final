@@ -447,6 +447,9 @@ We hoped to include `borough` as a predictor but could not due to high missingne
 
 We constructed and compared 3 models using a likelihood ratio test at the $\alpha$ = 0.05 significance level to select our final model, each with `has_casualty` as the response variable. Predictors in `model_1` (the base model) are `vtype1`, `vtype2`, `time_day`, `weekend_weekday`, and `yday`, `model_2` adds `factor1` and `factor2`, and `model_3` adds `weekend_weekday*time_day` to `model_2`.
 
+## Independence Assumption
+We will consider the assumption of independence between observations to be upheld because regardless of the number of vehicles involved, each accident receives only a single observation in the dataset. That removes the possibility that multiple rows correspond to the same accident and, thereby, the same accident conditions. If numerous reports of the same accident occur, there is still only one report made, so it is reasonable to assume that each observation is independent of the others, regardless of how many people reported it or how many cars were involved.
+
 ```{r}
 #| label: likelihoodratio
 # base model
