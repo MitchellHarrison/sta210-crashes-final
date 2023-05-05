@@ -291,7 +291,8 @@ crashes <- crashes %>%
           ))) |>
       rename(vtype2 = vehicle_type_code_2)
 
-# make `factor1`, `factor2`, `vtype1`, and `vtype2` factors rather than characters
+# make `factor1`, `factor2`, `vtype1`, and `vtype2` factors 
+# rather than characters
 crashes <- crashes %>%
   mutate(factor1 = as.factor(factor1),
          factor2 = as.factor(factor2),
@@ -443,7 +444,29 @@ We are very interested in the time status of MVCs and how that may affect casual
 
 We hoped to include `borough` as a predictor but could not due to high missingness. We also considered using `zip_code`, but this variable had over 100 unique levels and the proportion of accidents with casualties by zip code is approximately normally distributed around a median of 1.191, so we would not expect this to be a useful predictor.
 
-We will construct and compare 4 models to select our final model, each with `has_casualty` as the response variable. The first will in
+We constructed and compared 3 models using a likelihood ratio test to select our final model, each with `has_casualty` as the response variable. Predictors in model 1 (the base model) are `vtype1`, `vtype2`, `time_day`, `weekend_weekday`, and `yday`, with model 2 adding `factor1` and `factor2`, and model 3 adding `weekend_weekday*time_day` to model 2.
+
+```{r}
+#| label: likelihoodratio
+# base model
+model_base <- glm(has_casualty ~ vtype1 + vtype2 + time_day +
+                    weekend_weekday + yday, 
+              data = crashes, family = "binomial")
+
+# model 2: add `factor1` and `factor2`
+model_2 <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
+                 yday + factor1 + factor2, 
+              data = crashes, family = "binomial")
+
+# model 2: add `weekend_weekday*time_day`
+model_3 <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
+                 yday + factor1 + factor2 + weekend_weekday*time_day, 
+              data = crashes, family = "binomial")
+
+# Perform likelihood ratio test
+anova(model_base, model_2, model_3, test = "Chisq")
+
+```
 
 # Results
 
