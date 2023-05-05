@@ -602,12 +602,12 @@ model_2_aug |>
 #### b) Probabilities from Log(odds) slope estimates
 
 ```{r}
-
+#| label: Probs-from-model
 finalmodel_tidy <- finalmodel_tidy %>%
   mutate(prob = exp(estimate)/(1+exp(estimate)))
 
 finalmodel_tidy %>%
-  dplyr::select(term, prob)
+  dplyr::select(term, prob, p.value)
   
 ```
 
