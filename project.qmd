@@ -1,8 +1,9 @@
 ---
 title: "New York's Streetside Casualties"
 subtitle: "An explanatory analysis of NYC car accidents"
-author: "Drew LoPolito and Mitch Harrison"
 format: pdf
+geometry: margin=1in
+fontsize: 11pt
 execute: 
   warning: false
   execute: false
@@ -13,37 +14,40 @@ execute:
 
 ## Project Motivation
 
-Citizens of large cities all over America suffer injury and death in motor vehicle crashes. In New York, motor vehicle accidents are among the top five [reasons for hospitalizations statewide](https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm). We hope that motivated policymakers in NYC and other metropolitan areas could use our explanatory models to craft traffic policy, shift police resources, better target traffic citations, and turn our insights into potentially lifesaving urban development and planning.
+Citizens of large cities all over America suffer injury and death in motor 
+vehicle crashes. In New York, motor vehicle accidents are among the top five 
+reasons for hospitalizations statewide (Department of Health, 2023). 
+We hope that motivated policymakers in NYC and other metropolitan areas could 
+use our explanatory models to craft traffic policy, shift police resources, 
+better target traffic citations, and turn our insights into potentially 
+lifesaving urban development and planning.
 
 ## Dataset
 
-Our dataset is composed of harvested and compiled data from New York City Police Department (NYPD) open access data on all police reported motor vehicle collisions (MVC) in all five boroughs of New York City from July 1st, 2012 through April 24th, 2023. The police report from which individual MVC observations in our dataset hail (MV104-AN) is required to be filled out for MVC where someone is injured or killed, or which result in at least \$1,000 of total property damage.
+Our dataset is a random sampling of 10,000 motor vehicle collisions (MVCs) out 
+of the 2 million MVCs publicly released by the New York City Police
+Department (NYPD), spanning all five boroughs of New York City from July 1st, 
+2012 through April 24th, 2023. The police report from which individual MVC 
+observations in our dataset hail (MV104-AN) is required to be filled out for 
+any MVC in which someone is injured or killed, or which result in at least 
+\$1,000 of total property damage.
 
-We created a number of new variables by manipulating the dataset, as well as re-categorizing/cleaning some of the existing variables for practical use in modeling (for example, the original variables for factors contributing to the accident for each motorist and vehicle type of each motorist contained roughly 100 categories).
+We created a binary response variable corresponding to whether or not an MVC
+resulted in a *casualty* (defined as a fatality *or* an injury), and additional
+variables corresponding to type of vehicles involved (commercial, motorcycle,
+etc.) and factors that contributed to the MVC (aggressive driving, impairment,
+etc.). A full data dictionary is available in the appendix.
 
-The following are the variables of interest from our dataset, with new or re-categorized variables noted:
-
-**`has_casualty`** (New): a binary variable corresponding to whether a MVC resulted in at least one casualty. This variable was generated from the original `number_of_persons_injured` and `number_of_persons_killed` variables. **This is our response variable of interest.**
-
-**`weekend_weekday`** (New): a binary variable corresponding to whether a MVC occurred during the week or weekend. This variable was generated from the original `crash_date` variable.
-
-**`yday`** (New): a numeric variable ranging from 1 to 365 corresponding to the numerical day of the year on which the MVC occurred. This variable was generated from the original `crash_date` variable.
-
-**`time_day`** (New): a categorical variable with levels of "morning" (5 AM to 12 PM), "afternoon" (12 PM to 5 PM), "evening" (5 PM to 9 PM), and "night" (9 PM to 5 AM) corresponding to the time of day at which a MVC occurred. This variable was generated from the original 24-hr `crash_time` variable.
-
-**`vtype1`** and **`vtype2`** (Recategorized): categorical variables corresponding to the type(s) of each vehicle involved in the crash, with categories of "Passenger vehicles," "Commercial vehicles," "Motorcycles," "Non-Motor Vehicle," "Other/Unknown," and "None" (only applies to `vtype2`).
-
-**`factor1`** and **`factor2`** (Recategorized): categorical variables corresponding to any factor(s) which potentially contributed to the crash for respective vehicles, with categories of "Aggressive/Reckless Driving," "Failure to Obey Traffic Signs/Signals/Rules," "Impairment/Distraction/Fatigue," "Performance-unrelated Technical/Mechanical Factors," and "Other/Unknown."
-
-***Our primary research concern is determining which characteristics of a MVC's timing and participants involved make casualties more likely.***
+Our primary research concern is determining which characteristics of an MVC's 
+timing and participants involved make casualties more likely.
 
 ```{r}
 #| label: import-libs
 library(tidyverse)
+library(Stat2Data)
 library(tidymodels)
 library(lubridate)
-library(gt)
-library(Stat2Data)
+library(flextable)
 ```
 
 ```{r}
@@ -53,13 +57,11 @@ crashes <- read_csv("data/crashes_10k.csv")
 
 ## Data Cleaning
 
-Notably, only one MV104-AN form is filled out for all involved in an accident, meaning each observation in our dataset represents a unique MVC.
-
-Our initial dataset contained approximately 1.9 million observations, found [here](https://www.kaggle.com/datasets/utkarshx27/motor-vehicle-collisions?resource=download). This was too large to push to git, so we sampled 10,000 observations from the dataset completely at random (**Appendix 1a**). The original dataset, as well as our randomly sampled dataset, contained data on crashes involving 1 to 5 motorists. However, 93% of crashes in the dataset occurred between 2 or fewer motorists (98% between 3 or fewer and 100% between 4 or fewer). Due to high levels of missingness in crashes with 3 or more motorists, as well as their low real-world frequency in New York City (where the kind of highway pile-ups which generate MVC with 3 or more motorists aren't generally observed), we decided to examine exclusively MVC between 2 or fewer motorists by removing all observations involving more than two vehicles, which brought our total number of observations down to approximately 9,300.
-
-Next, we used the original counts of persons killed and persons injured to create a count of casualties (defined as injuries **and** casualties). We then created binary variables for MVC injury, fatality, and casualty, the last of which, is our response variable. We used these three variables to create a ordinal category of accident severity, with levels of "no casualties," "injury," and "fatal."
-
-We also cleaned/manipulated the time data, which initially was composed of a date column and a 24-hr time column. We used this data to create a variable for MVC time of the day, day of the week, numerical day of the year (1-365), and weekday or weekend timing.
+For our analysis, we selected only MVCs between two or fewer motorists due to
+high levels of missingness in crashes with greater than two motorists. We then
+re-categorized the hundreds of vehicle types and contributing factors into 
+fewer, larger bins, and created categorical variables for time of day and 
+whether or not the crash took place during the weekend.
 
 ```{r}
 #| label: clean-data
@@ -116,65 +118,8 @@ crashes <- crashes |>
     weekend_weekday = as.factor(weekend_weekday)
 
   )
-```
 
-```{r}
-#| label: quick-eda
-#| include: false
-# Count the number of levels in vehicle_type_code_1
-nlevels_vehicle_type_code_1 <- length(levels(factor(crashes$vehicle_type_code_1)))
-cat("Number of levels in vehicle_type_code_1:", nlevels_vehicle_type_code_1, "\n")
-
-# Count the number of levels in vehicle_type_code_2
-nlevels_vehicle_type_code_2 <- length(levels(factor(crashes$vehicle_type_code_2)))
-cat("Number of levels in vehicle_type_code_2:", nlevels_vehicle_type_code_2, "\n")
-
-# Count the number of levels in contributing_factor_vehicle_1
-nlevels_contributing_factor_vehicle_1 <- length(levels(factor(crashes$contributing_factor_vehicle_1)))
-cat("Number of levels in contributing_factor_vehicle_1:", nlevels_contributing_factor_vehicle_1, "\n")
-
-# Count the number of levels in contributing_factor_vehicle_2
-nlevels_contributing_factor_vehicle_2 <- length(levels(factor(crashes$contributing_factor_vehicle_2)))
-cat("Number of levels in contributing_factor_vehicle_2:", nlevels_contributing_factor_vehicle_2, "\n")
-
-# combine unique levels from both vehicle_type_code variables
-unique_levels_veh_type <- union(crashes$vehicle_type_code_1,
-                                crashes$vehicle_type_code_2)
-
-# count total number of unique levels in vehicle_type_code variables
-num_unique_levels_veh_type <- length(unique_levels_veh_type)
-
-# combine unique levels from both contributing_factor variables
-unique_levels_cont_fact <- union(crashes$contributing_factor_vehicle_1,
-                                 crashes$contributing_factor_vehicle_2)
-
-# count total number of unique levels in contributing_factor variables
-num_unique_levels_cont_fact <- length(unique_levels_cont_fact)
-
-# count number of MVCs without vehicle type 2 but with a contributing factor vehicle 2
-crashes %>%
-  filter(!is.na(contributing_factor_vehicle_2) & is.na(vehicle_type_code_2)) %>%
-  count()
-
-# count number of MVCs without data for vehicle type 1
-crashes %>%
-  filter(is.na(vehicle_type_code_1)) %>%
-  count()
-
-# count proportion of MVCs without data for vehicle type 1
-(crashes %>%
-  filter(is.na(vehicle_type_code_1)) %>%
-  count())/(nrow(crashes))
-```
-
-Next, we cleaned the original variables corresponding to vehicle types, involved in the accident as well as factors in each vehicle which may have contributed to the MVC. 453 MVCs contained an observation for second contributing factors, but not second vehicles, which we believe indicated not that there was a second vehicle but that the vehicle type hadn't been recorded, so we replaced those missing values with "unknown." Additionally, 59 MVCs had missing observations for all vehicles, which we removed since each MVC must involve at least one vehicle and this represented only 0.638% of the dataset.
-
-Our initial dataset had 121 unique levels for vehicle type. In order to make these types interpretable for EDA and potentially in our model, we consolidated them into 5 larger categories: "Passenger vehicles," "Commercial vehicles," "Motorcycles," "Non-Motor Vehicle," and "Other/Unknown" (also a category of "None", which only applies to the second vehicle type).
-
-The initial dataset also had 53 unique contributing factors. In order to make these types interpretable for EDA and potentially in our model, we consolidated them into 5 larger categories: "Aggressive/Reckless Driving," "Failure to Obey Traffic Signs/Signals/Rules," "Impairment/Distraction/Fatigue," "Performance-unrelated Technical/Mechanical Factors," and "Other/Unknown."
-
-```{r}
-#| label: correct-vehicle-factor-categories
+# consolidate contributing factors
 crashes <- crashes |>
   mutate(vehicle_type_code_2 = if_else(
     !is.na(contributing_factor_vehicle_2) & is.na(vehicle_type_code_2),
@@ -218,6 +163,7 @@ crashes <- crashes %>%
   rename(factor1 = contributing_factor_vehicle_1, 
          factor2 = contributing_factor_vehicle_2)
 
+# consolidate vehicle type
 crashes <- crashes %>%
   mutate(across(starts_with("vehicle_type_code_1"),
                 ~ case_when(
@@ -286,6 +232,32 @@ crashes <- crashes %>%
           ))) |>
       rename(vtype2 = vehicle_type_code_2)
 
+# boolean variables for vehicle type and MVC causes
+crashes <- crashes |>
+  mutate(
+    involved_motorcycle = if_else(
+      vtype1 == "Motorcycles" | vtype2 == "Motorcycles", T, F
+    ),
+    involved_non_motor = if_else(
+      vtype1 == "Non-Motor Vehicle" | vtype2 == "Non-Motor Vehicle", T, F
+    ),
+    was_impaired = if_else(
+      factor1 == "Impairment/Distraction/Fatigue" |
+        factor2 == "Impairment/Distraction/Fatigue", T, F
+    ),
+    failed_to_obey = if_else(
+      factor1 == "Failure to Obey Traffic Signs/Signals/Rules" |
+        factor2 == "Failure to Obey Traffic Signs/Signals/Rules", T, F
+    ),
+    mech_failures = if_else(
+      factor1 == "Performance-unrelated Technical/Mechanical Factors" |
+        factor2 == "Performance-unrelated Technical/Mechanical Factors", T, F
+    ),
+    misc_cause = if_else(
+      factor1 == "Other/Unknown" | factor2 == "Other/Unknown", T, F
+    )
+  )
+
 # make `factor1`, `factor2`, `vtype1`, and `vtype2` factors 
 # rather than characters
 crashes <- crashes %>%
@@ -297,13 +269,16 @@ crashes <- crashes %>%
 
 ## Exploratory Analysis
 
-We can see from the visualizations below that vehicle type seems to have a significant impact on MVC casualty rate, particularly with regard to motorcycles and non-motor vehicles.
+The following figure demonstrates the large difference in casualty rate between 
+MVCs that did and did not involve motorcycles or non-motor vehicles. Similar
+bivariate analyses showed much smaller differences in casualty rates among 
+different causal factors (see appendix).
 
 ```{r}
 #| label: viz-prop-casualties-by-vtype1-and-vtype2
 #| fig-width: 7
-#| fig-height: 2.2
-# vtype1
+#| fig-height: 3
+
 crashes %>%
   filter(vtype1 != "Other/Unknown") %>%
   ggplot(aes(x = vtype1, fill = has_casualty)) +
@@ -315,30 +290,158 @@ crashes %>%
     y = "Casualty Rate", 
     fill = "Casualty", 
     title = "Motorcycles and non-motor vehicles have the highest casualty rate",
-    subtitle = "Casualty rate of MVCs in New York by vehicle involved"
+    subtitle = "Casualty rate of MVCs in New York City by vehicles involved"
   )
 ```
 
-A similar analysis (**Appendix 2c**) shows no significant difference in casualty rates among categories.
+# Methodology
 
-To explore how timing might effect the occurrence of casualties, we explored the relationship between day of the week and casualty occurrence, finding that weekend MVC casualties were more heavily concentrated in the early morning hours than weekday MVC casualties. This was interesting as it provided some credence to the intuitive thought that early morning weekend drivers are more likely than early morning weekday drivers to be leaving parties/going out, therefore making them more likely to be impaired and get into a serious MVC. Additionally, the proportion of early morning (12 AM to 4 AM) weekend drivers with "Impairment/Distraction/Fatigue" listed as a factor was 0.2685617, fairly different from that of early morning weekday drivers, 0.1746032.
+We fit a binary logistic regression model examining where there are associations
+between odds of casualty occurrence and peri-accident characteristics. Our
+predictors were chosen a priori using our original analyses (shown above and 
+in the appendix) and using other research in the field (Mohamed et al., 2013; 
+Zou et al., 2017). 
+
+Independence is reasonable because exactly one observation is made per accident,
+regardless of number of vehicles involved. Thus, accidents that impacted others 
+would be considered in the same observation. Linearity, as assessed
+via empirical logit plots, was also reasonable (see appendix). Finally, we used
+likelihood ratio tests that suggested good model fit compared to other
+combinations of response variables and predictors $(p=2.3\times10^{-16})$.
+
+# Results
+
+Our model found four statistically significant $(p<0.05)$ predictors of
+casualties in MVCs. As expected from our exploratory analysis, MVCs have a much
+higher chance of casualty if motorcycles $(p=1.03\times10^{-34})$ or non-motor 
+vehicles $(p=3.98\times10^{-94})$ were involved. These are the most significant
+predictors by far, with the others listed in the following table. For the
+complete results of the model, see the appendix.
 
 ```{r}
-#| label: calculate-prop-of-weekend-weekday-earlymorn-intoxicated
-#| include: false
+#| label: final-model-output
+#| tbl-cap: Significant predictors (p < 0.05)
+finalmodel <- glm(has_casualty ~ involved_motorcycle + involved_non_motor +
+                    time_day + weekend_weekday + yday + failed_to_obey + 
+                    was_impaired + mech_failures + misc_cause, 
+                  data = crashes, family = "binomial")
 
-# weekday prop
-(crashes %>%
-  filter(weekend_weekday == "Weekday" & crash_time %in% c(00:00, 04:00) & factor1 == "Impairment/Distraction/Fatigue") %>%
-  count())/(crashes %>%
-  filter(weekend_weekday == "Weekday" & crash_time %in% c(00:00, 04:00)) %>%
-  count())
+finalmodel_tidy <- tidy(finalmodel)
+
+# add an odds column to final model output by exponentiating slope estimates
+finalmodel_tidy <- finalmodel_tidy %>%
+  mutate(odds = exp(estimate))
+
+# output table manually
+pred_names <- c("Involved motorcycle", "Involved non-motor vehicle",
+               "MVC during evening", "MVC at night", 
+               "Failed to obey traffic rules", "Impaired driver",
+               "Miscellaneous/unknown cause")
+
+ci <- confint(finalmodel) |> 
+  exp() |> 
+  round(2) |> 
+  as_tibble() |>
+  slice(2,3,5,6,9,10,12) |>
+  mutate(joined = paste("[", `2.5 %`, ", ", `97.5 %`, "]", sep = "")) |>
+  select(joined) |>
+  pull()
+
+tab_data <- finalmodel_tidy |>
+  filter(p.value <= 0.05) |>
+  select(term, odds, p.value) |>
+  mutate(
+    p.value = format(p.value, scientific = T, digits = 2),
+    odds = round(odds, 2)
+  ) |>
+  slice_tail(n = 7) |>
+  rename(Predictor = term, `Odds ratio` = odds, `P-value` = p.value) |>
+  mutate(
+    Predictor = pred_names,
+    `95% CI` = ci
+  )
+
+
+table <- flextable(tab_data)
+table <- width(table, width = 1.3)
+table <- align(table, align = "right", part = "all")
+table <- width(table, j = 1, width = 2.5)
+table <- bold(table, part = "header")
+table
 ```
+
+# Discussion
+
+Whether or not an MVC involved a cyclist or motorcycle rider is by far the best
+predictor of the odds of a casualty occurring. However, should policy makers
+only be willing to make a single change to try to stem the flow of MVC 
+casualties, improving conditions for bikers may not be the most efficient 
+choice. While their casualty rate is the highest, in absolute number,
+non-motor vehicles and motorcycles combine to make up less than 200 of the
+10,000 MVCs in our sampling.
+
+To save the highest absolute number of casualties, improving evening- and 
+night-time conditions is a better option, as the total number of casualties
+across times of day is much more uniform than across vehicle type. 
+
+While we were unable to investigate the specific causes of the increase in 
+casualty rate during the later hours of the day, future research that includes 
+light conditions from sunlight or streetlights, weather data, impairment rates, 
+and other possible causes could further narrow in on a policy recommendation for
+city leaders. Additional research is also needed to investigate whether or not
+working to increases rates of cycling (thus having fewer cars to cause 
+accidents) would be a net increase or decrease in absolute casualty count, 
+especially given such high casualty rates in the accidents that *do* occur
+involving cyclists and motorcyclists.
+
+While further research and additional data are needed, we hope that the insights 
+that our model is able to predict can at least spark a conversation about 
+potential policy decisions for urban planners in NYC and similar American 
+cities.
+
+{{< pagebreak >}}
+
+# Appendix
+## Data Dictionary
+
+`has_casualty` (response variable): A boolean variable that is `True` when there 
+was at least one injury or death in an MVC.
+
+`involved_motorcycle`: A boolean variable that is `True` when one or more of the
+vehicles involved was a motorcycle, motor scooter, or moped (generalized to 
+"motorcycle" in this report).
+
+`involved_non_motor`: A boolean variable that is `True` when one of the vehicles
+involved was a bicycle or scooter (electric or analog).
+
+`time_day`: A categorical variable that is `morning` if the MVC occurred between
+5:00 am and 11:59 am, `afternoon` if between 12:00 pm and 4:59 pm, `evening` if
+between 5:00 pm and 8:59 pm, and `night` if between 9:00 pm and 4:49 am.
+
+`weekend_weekday`: A categorical variable that is `Weekend` if an MVC occurred
+on Saturday or Sunday, and `Weekday` otherwise.
+
+`yday`: A numeric variable representing the cumulative day of the year (1-365)
+on which an MVC occurred.
+
+`failed_to_obey`: A boolean variable that is `True` if one of the listed causes
+was failure to obey traffic signs/signals/rules.
+
+`was_impaired`: A boolean variable that is `True` if one of the listed causes
+was impairment, fatigue, or fatigue.
+
+`mech_failures`: A boolean variable that is `True` if one of the listed causes
+was performance-unrelated mechanical failures of one or more vehicles.
+
+`misc_cause`: A boolean that is `True` if the cause of an MVC is unknown or does
+not fall into any other category.
+
+## Exploratory Data Analysis
 
 ```{r}
 #| label: viz-time-density-with-weekend_weekday
 #| fig-width: 7
-#| fig-height: 2.7
+#| fig-height: 3
 crashes |>
   filter(num_casualties > 0) |>
   mutate(color = if_else(weekend_weekday == "Weekend", 
@@ -372,114 +475,10 @@ crashes |>
   )
 ```
 
-We also visualized densities of casualty occurrence and non-occurrence by numerical day of the year. We observed proportional casualty density to be lower in the colder winter months, and higher in the summer and fall.
-
-```{r}
-#| label: viz-density-severity-day-of-year
-#| fig-width: 7
-#| fig-height: 2.8
-crashes |>
-  ggplot(aes(x = yday)) +
-  geom_density(data = filter(crashes, severity == "no casualties"), 
-               aes(group = severity), color = "lightgray") +
-  geom_density(data = filter(crashes, severity == "injury"), color = "red") +
-  annotate("text", color = "red", label = "Casualties", x = 27, y = 0.0019,
-           fontface = "bold", hjust = "left") +
-  annotate("text", color = "gray", label = "No casualties", x = 5, 
-           y = 0.0029, fontface = "bold", hjust = "left") +
-  theme_classic() +
-  labs(
-    x = "Day of the year",
-    y = "Density",
-    title = "Colder months have lower vehicular casualty proportion",
-    subtitle = "NYC car accident density over all years by level of severity"
-  )
-```
-
-Further analysis was done to explore whether zip code seemed to impact casualty rates (**Appendix 2a**), but this only revealed that these rates were approximately normally distributed. We also visualized MVC count by borough (**Appendix 2b**), seeing no significant trend other than high missingness for `borough` data.
-
-# Methodology
-
-We intend to explore the factors related to timing and characteristics of drivers which might contribute to casualties in MVCs. Our outcome variable of interest, `has_casualty`, is a binary variable, thus the logical option in our case is to fit a logistic regression model to investigate our primary research concern.
-
-We anticipate that the vehicle type involved in the MVC will play a significant role in whether or not a MVC has casualties, particularly in the context of the visualizations from our EDA. We will absolutely want to include the types of the vehicles involved in the crash, `vtype1` and `vtype2`, due to EDA as well as the intuitive fact that MVCs involving vehicles which leave a driver more exposed are far more likely to leave the driver with a casualty.
-
-EDA showed less significant differences in casualty frequency between types of contributing factors to an accident (`factor1` and `factor2`) than it did between types of vehicles. Although we might expect that different contributing factors might contribute differently to accident severity (e.g., we would expect that driving drunk would be more likely to cause an accident with casualties than if someone fails to come to a complete stop at a stop sign), we are not completely sure that these factors will be useful in the fit of our model. Therefore, `factor1` and `factor2` will be \*considered\* in our model selection process, and we will treat them as a "package deal," since it stands to reason that if one of the vehicle factors is useful, it would be inappropriate to omit the other
-
-We are very interested in the time status of MVCs and how that may affect casualty likelihood, including time of day (`time_day`), weekend or weekday (`weekend_weekday`), and numerical day of the year (`yday`). In our EDA, we saw that the density of MVCs with casualties over the course of a day varied based on `weekend_weekday`, and also observed a change in relative densities of MVCs with and without accidents according to `yday`. Therefore, we will include `time_day`, `weekend_weekday`, and `yday` in our model. As we observed that weekend MVC casualties were more heavily concentrated in the early morning hours than weekday MVC casualties, we will also *consider* an interaction term between `weekend_weekday` and `time_day`, `weekend_weekday*time_day`.
-
-We hoped to include `borough` as a predictor but could not due to high missingness. We also considered using `zip_code`, but this variable had over 100 unique levels and the proportion of accidents with casualties by zip code is approximately normally distributed around a median of 1.191, so we would not expect this to be a useful predictor.
-
-We constructed and compared 3 models using a likelihood ratio test at the $\alpha$ = 0.05 significance level to select our final model, each with `has_casualty` as the response variable. Predictors in `model_1` (the base model) are `vtype1`, `vtype2`, `time_day`, `weekend_weekday`, and `yday`, `model_2` adds `factor1` and `factor2`, and `model_3` adds `weekend_weekday*time_day` to `model_2`.
-
-Based on our likelihood ratio test (**Appendix 3a**), `model_2` fits our data better than model 1, while the difference between `model_2` and `model_3` is insignificant. We move forward with `model_2` (as it has fewer predictors than `model_3`) and test if it satisfies assumptions of independence and linearity.
-
-We will consider the assumption of independence between observations to be upheld because regardless of the number of vehicles involved, each accident receives only a single observation in the dataset. That removes the possibility that multiple rows correspond to the same accident and, thereby, the same accident conditions. If numerous reports of the same accident occur, there is still only one report made, so it is reasonable to assume that each observation is independent of the others, regardless of how many people reported it or how many cars were involved. From the plot showing `yday` compared to the predicted log odds of MVC casualty (**Appendix 3b**), there appears to be a fairly strong linear relationship between the two, so the linearity assumption for `model_2` does seem to be reasonable. Thus, we will proceed with `model_2` as our final model.
-
-# Results
-
-```{r}
-#| label: final model output
-# model 2: final model
-finalmodel <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
-                 yday + factor1 + factor2, 
-              data = crashes, family = "binomial")
-
-finalmodel_tidy <- tidy(finalmodel)
-
-# add an odds column to final model output by exponentiating slope estimates
-finalmodel_tidy <- finalmodel_tidy %>%
-  mutate(odds = exp(estimate))
-
-# print final model with odds included
-finalmodel_tidy %>%
-  dplyr::select(term, estimate, odds, std.error, statistic, p.value) |>
-  print(n=50)
-```
-
-The final model fit can be assessed by the ROC AUC estimate (**Appendix 4a**). We found an ROC AUC of 0.7073, indicating that the model is fairly well fitted to our data for predicting MVS that did and did not result in casualties. This suggests that the model may be somewhat useful for predicting the likelihood of casualties in MVCs. However, our research question was designed to asses the extent to which certain variables are associated with MVC casualty occurrence, not primarily with predicting said occurrences.
-
-Our model output shows a number of interesting findings. For ease of interpretation in terms of odds ratios, we added a column of odds ratios for each slope, the exponentiated logit slope estimates. Statistical significance for a slope estimate was defined as having an associated p-value \< 0.05.
-
-Regarding vehicle type, all categories of the variable had statistically significant slope estimates, and the reference category for all was "Commercial vehicles." As expected based on EDA, the slopes for "Motorcycles" and "Non-Motor Vehicle" were the most significant and carried the highest odds ratios. Contextually, comparing two MVCs in NYC, one between two commercial vehicles and one where the first motorist is on a motorcycle and the second in a commercial vehicle, we predict that the MVC involving the motorcyclist has, incredibly, 16.482 times the odds of resulting in a casualty as compared to the former, all other model predictors held constant.
-
-In terms of timing, numerical day of the year was not found to be significantly associated with casualty occurrence, nor was whether the MVC occurred on a weekend. MVC occurrence in the evening or nighttime (as compared to morning) was significantly associated with casualty occurrence. For two MVCs in NYC, one occurring in the morning and one at night, we predict that the latter has 1.6 times the odds of resulting in a casualty, all all other model predictors held constant.
-
-None of the second driver factors were significantly related to casualty occurrence, however, the first driver failing to obey traffic signs/signals/rules or being impaired/distracted/fatigued (as compared to driving aggressively or recklessly) were both significantly associated with casualty occurrence, carrying odds ratios of 1.697 and 1.22, respectively.
-
-# Discussion
-
-Our primary research concern is determining which characteristics of a MVC's timing and participants involved make casualties more likely. The model output shows that vehicle type significantly impacts the odds of a casualty occurring. Specifically, Motorcycles and Non-Motor Vehicles are associated with a *much* higher likelihood of a casualty than Passenger vehicles. Additionally, both time of day and weekday/weekend variance has a statistically significant impact on the probability of a casualty.
-
-However, the day of the year is *not* a statistically significant predictor of casualties. It should be noted that even though secondary contributing factors are included in the model, none of them have a statistically significant effect on whether or not an MVC resulted in a casualty.
-
-Our final model shows that several factors play a role in determining whether an MVC in New York City results in any casualties. The variables that significantly contribute to the likelihood of a casualty include the types of vehicles involved, the time of day, and whether the MVC occurred on a weekend.
-
-However, there are several limitations to this analysis that must be acknowledged. Firstly, the data used in this study was harvested and compiled from NYPD open access data, which means that the reliability and validity of the data may not be ideal, with some incidents of MVCs potentially not reported. It is also worth noting that the dataset is limited to New York City and may not be generalizable to other metropolitan areas. Future studies should attempt to replicate this analysis in other urban areas to determine if the findings are consistent across different locations.
-
-Finally, the study's limitations must be considered when interpreting the results of the analysis. While the model provides statistical evidence to support the hypothesis that certain characteristics of an MVC increase the likelihood of a casualty, it is important to note that correlation does not necessarily imply causation. Additionally, the statistical analysis used in this study assumes that the data meets certain assumptions, such as independence and linearity, which may not be valid in all cases.
-
-As for future work, the analysis could be improved by collecting more a greater number of variables (driver demographics and weather conditions, for example). Future studies could also attempt to identify which specific combinations of variables are most strongly associated with a higher likelihood of a casualty, rather than treating each variable as an independent factor. Overall, further investigation is needed to fully understand the complex relationship between MVC characteristics and casualty likelihood.
-
-{{< pagebreak >}}
-
-# Appendix
-
-## 1. Data Cleaning
-
-#### a) Sample code for sampling/exportation of large original dataset
-
-    crashes_original <- read_csv(<filename>)
-    crashes <- sample_n(crashes_original, 10000)
-    write_csv(crashes, <"crashes">)
-
-## 2. Exploratory Data Analysis
-
-#### a) Visualization of Casualty Rates by Zip Code
 
 ```{r}
 #| label: viz-zip-code-box
-#| fig-height: 2
+#| fig-height: 3
 #| fig-width: 7
 zip_crash <- crashes |>
   group_by(zip_code) |>
@@ -509,33 +508,11 @@ zip_crash |>
   )
 ```
 
-#### b) Visualization of MVC by Borough
-
-```{r}
-#| label: viz-hist-by-street
-#| fig-width: 7
-crashes |>
-  group_by(borough) |>
-  summarise(count = n()) |>
-  mutate(color = if_else(is.na(borough), "red", "lightgray")) |>
-  ggplot(aes(x = borough, y = count, fill = color)) +
-  geom_col(alpha = 0.5, color = "black") +
-  scale_fill_identity() +
-  theme_classic() +
-  labs(
-    x = NULL,
-    y = "Count",
-    title = "\"Missing\" is the biggest borough in NYC",
-    subtitle = paste("Missingness of borough variable is too great to include",
-                     "in the model")
-  )
-```
-
-#### c) Proportion of casualties by contributing factor
 
 ```{r}
 #| label: viz-prop-casualties-by-factor1-and-factor
 #| fig-width: 7
+#| fig-height: 3
 # factor1
 crashes %>%
   filter(factor1 != "Other/Unknown") %>%
@@ -559,26 +536,35 @@ crashes %>%
 
 #### a) Likelihood-ratio test between models considered
 
+The following output shows that `Model 2` is superior $(p=2.3\times10^{-16})$, 
+and was therefore used in our final analysis.
+
 ```{r}
 #| label: build-models and likelihood ratio test
 # model 1: base model
-model_1 <- glm(has_casualty ~ vtype1 + vtype2 + time_day +
-                    weekend_weekday + yday, 
+model_1 <- glm(has_casualty ~ involved_motorcycle + involved_non_motor + 
+                 time_day + weekend_weekday + yday, 
               data = crashes, family = "binomial")
 
-# model 2: add `factor1` and `factor2`
-model_2 <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
-                 yday + factor1 + factor2, 
+# model 2: add contributing factors
+model_2 <- glm(has_casualty ~ involved_motorcycle + involved_non_motor +
+                 time_day + weekend_weekday + yday + failed_to_obey + 
+                 was_impaired + mech_failures + misc_cause, 
               data = crashes, family = "binomial")
 
-# model 3: add `weekend_weekday*time_day`
-model_3 <- glm(has_casualty ~ vtype1 + vtype2 + time_day + weekend_weekday +
-                 yday + factor1 + factor2 + weekend_weekday*time_day, 
+# model 3: add `weekend_weekday*time_day` interaction
+model_3 <- glm(has_casualty ~ involved_motorcycle + involved_non_motor +
+                 time_day + weekend_weekday + yday + failed_to_obey +
+                 was_impaired + mech_failures + misc_cause +
+                 weekend_weekday*time_day, 
               data = crashes, family = "binomial")
+
 # Perform likelihood ratio test
-anova(model_1, model_2, model_3, test = "Chisq")
-
+options(show.models = F)
+anova <- anova(model_1, model_2, model_3, test = "Chisq")
+anova[-1]
 ```
+
 
 #### b) Numerical Day of the Year vs. Log-odds of Casualty Plot
 
@@ -587,26 +573,50 @@ anova(model_1, model_2, model_3, test = "Chisq")
 emplogitplot1(has_casualty ~ (yday), data = crashes, ngroups = "all")
 ```
 
-## 4. Results
 
-#### a) ROC Assessment
+{{< pagebreak >}}
 
+## 4. Final model
+
+The following table is the complete model used in our analysis. Variable names
+are raw, as seen in our code. 
 ```{r}
-#| label: roc-auc
-model_2_aug <- augment(model_2) |>
-  mutate(prob = exp(.fitted)/1+exp(.fitted),
-         pred_leg = if_else(prob > 0.5, T, F))
-
-model_2_aug |>
-  roc_auc(
-    truth = as.factor(has_casualty),
-    prob,
-    event_level = "second"
-  )
+#| label: full-model-output
+#| tbl-cap: Full model output
+terms <- c("Baseline", "Involved Motorcycle", "Involved non-motor vehicle",
+           "Afternoon", "Evening", "Night", "Weekend", "Day of year",
+           "Failed to obey", "Impaired", "Mech. Failures", 
+           "Misc./Unknown cause")
+finalmodel_tidy |>
+  mutate(
+    estimate = format(estimate, scientific = T, digits = 3),
+    std.error = format(std.error, scientific = T, digits = 3),
+    p.value = format(p.value, scientific = T, digits = 3),
+    odds = format(odds, scientific = T, digits = 3),
+    term = terms
+  ) |>
+  select(-std.error, -statistic) |>
+  flextable() |>
+  align(align = "right", part = "all") |>
+  bold(part = "header") |>
+  width(width = 1.3) |>
+  width(j = 1, width = 2.5)
 ```
+
 
 {{< pagebreak >}}
 
 # 5. Works Cited
 
-Department of Health. All Injuries in New York State. (n.d.). Retrieved May 4, 2023, from https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm
+Department of Health. All Injuries in New York State. (n.d.). Retrieved May 4, 
+2023, from https://www.health.ny.gov/statistics/prevention/injury_prevention/all_injury.htm
+
+Mohamed, M. G., Saunier, N., Miranda-Moreno, L. F., &amp; Ukkusuri, S. V. 
+(2013). A clustering regression approach: A comprehensive injury severity 
+analysis of pedestrian–vehicle crashes in New York, US and Montreal, Canada. 
+Safety Science, 54, 27–37. https://doi.org/10.1016/j.ssci.2012.11.001 
+
+Zou, W., Wang, X., &amp; Zhang, D. (2017). Truck crash severity in New York 
+City: An investigation of the spatial and the time of day effects. Accident 
+Analysis &amp;amp; Prevention, 99, 249–261. 
+https://doi.org/10.1016/j.aap.2016.11.024 
