@@ -38,8 +38,9 @@ variables corresponding to type of vehicles involved (commercial, motorcycle,
 etc.) and factors that contributed to the MVC (aggressive driving, impairment,
 etc.). A full data dictionary is available in the appendix.
 
-Our primary research concern is determining which characteristics of an MVC's 
-timing and participants involved make casualties more likely.
+Our primary research question is determining whether characteristics of an
+MVC's timing, contributing factors, and involved vehicles might be associated
+with differential odds of casualty.
 
 ```{r}
 #| label: import-libs
@@ -60,8 +61,9 @@ crashes <- read_csv("data/crashes_10k.csv")
 For our analysis, we selected only MVCs between two or fewer motorists due to
 high levels of missingness in crashes with greater than two motorists. We then
 re-categorized the hundreds of vehicle types and contributing factors into 
-fewer, larger bins, and created categorical variables for time of day and 
-whether or not the crash took place during the weekend.
+fewer, larger bins based on common characteristics, and created categorical
+variables corresponding to time of day and whether the crash took place during
+a weekend.
 
 ```{r}
 #| label: clean-data
@@ -285,6 +287,14 @@ crashes %>%
   geom_bar(position = "fill", alpha = 0.5, color = "black") + 
   scale_fill_manual(values = c("lightgray", "red"), labels = c("No", "Yes")) +
   theme_classic() +
+  annotate("text", x = 1, y = 1.05, label = "773 MVCs", color = "red",
+           alpha = 0.7, fontface = "bold") +
+  annotate("text", x = 2, y = 1.05, label = "79 MVCs", color = "red",
+           alpha = 0.7, fontface = "bold") +
+  annotate("text", x = 3, y = 1.05, label = "73 MVCs", color = "red",
+           alpha = 0.7, fontface = "bold") +
+  annotate("text", x = 4, y = 1.05, label = "5557 MVCs", color = "red",
+           alpha = 0.7, fontface = "bold") +
   labs(
     x = NULL, 
     y = "Casualty Rate", 
@@ -296,27 +306,40 @@ crashes %>%
 
 # Methodology
 
-We fit a binary logistic regression model examining where there are associations
-between odds of casualty occurrence and peri-accident characteristics. Our
-predictors were chosen a priori using our original analyses (shown above and 
-in the appendix) and using other research in the field (Mohamed et al., 2013; 
-Zou et al., 2017). 
+We fit a multivariable logistic regression model examining where there are 
+associations between odds of casualty occurrence and peri-accident 
+characteristics. Our predictors were chosen a priori using our original analyses 
+(shown above and in the appendix) and based on associative factors identified in 
+prior published research in the field (Mohamed et al., 2013; Zou et al., 2017). 
 
 Independence is reasonable because exactly one observation is made per accident,
-regardless of number of vehicles involved. Thus, accidents that impacted others 
-would be considered in the same observation. Linearity, as assessed
-via empirical logit plots, was also reasonable (see appendix). Finally, we used
-likelihood ratio tests that suggested good model fit compared to other
-combinations of response variables and predictors $(p=2.3\times10^{-16})$.
+regardless of number of vehicles involved. Thus, we assume that accidents are
+independent from each other and that one accident cannot impact others. 
+Linearity, as assessed via empirical logit plots, was also reasonable 
+(see appendix).
+
+All statistical analyses were performed at an a priori 0.05 level of 
+significance.
 
 # Results
 
-Our model found four statistically significant $(p<0.05)$ predictors of
+Our model found seven statistically significant $(p<0.05)$ predictors of
 casualties in MVCs. As expected from our exploratory analysis, MVCs have a much
-higher chance of casualty if motorcycles $(p=1.03\times10^{-34})$ or non-motor 
-vehicles $(p=3.98\times10^{-94})$ were involved. These are the most significant
-predictors by far, with the others listed in the following table. For the
-complete results of the model, see the appendix.
+higher chance of casualty if motorcycles $(p<0.001)$ or non-motor 
+vehicles $(p<0.001)$ were involved when compared to a baseline of MVCs which
+involved neither, with odds ratios of 10.2 and 18.9 respectively. 
+
+Further, evening- and night-time MVC's $(p<0.001)$ showed an increased casualty
+rate, with odds ratios of 1.45 and 1.73 respectively, compared to a baseline
+of morning accidents. The most significant contributing factors were failure to 
+obey traffic rules $(p<0.001)$, impairment $(p<0.001)$, and unknown or 
+miscellaneous $(p<0.001)$, with odds ratios of 2.04, 1.36, and 1.46 
+respectively, when compared to a baseline contributing factor of 
+aggressive/reckless driving.
+
+Table 1 displays selected odds ratios and associated 95\% confidence intervals
+from our model. Full model results, including estimates from all predictors and
+a complete description of the baseline MVC, are available in the appendix.
 
 ```{r}
 #| label: final-model-output
@@ -372,13 +395,14 @@ table
 
 # Discussion
 
-Whether or not an MVC involved a cyclist or motorcycle rider is by far the best
-predictor of the odds of a casualty occurring. However, should policy makers
-only be willing to make a single change to try to stem the flow of MVC 
-casualties, improving conditions for bikers may not be the most efficient 
-choice. While their casualty rate is the highest, in absolute number,
-non-motor vehicles and motorcycles combine to make up less than 200 of the
-10,000 MVCs in our sampling.
+Whether or not an MVC involved a cyclist or motorcycle rider has by far the 
+largest odds of casualties, with odds ratios of 18.89 and 10.25 respectively,
+compared to the next highest odds ratio (from failure to obey traffic rules)
+being 2.04. However, should policy makers be willing to make only a single 
+change to try to stem the flow of MVC casualties, improving conditions for 
+bikers may not be the most efficient choice. While their casualty rate is the 
+highest, in absolute number, non-motor vehicles and motorcycles combine to make 
+up less than 200 of the 10,000 MVCs in our sampling.
 
 To save the highest absolute number of casualties, improving evening- and 
 night-time conditions is a better option, as the total number of casualties
@@ -536,7 +560,7 @@ crashes %>%
 
 #### a) Likelihood-ratio test between models considered
 
-The following output shows that `Model 2` is superior $(p=2.3\times10^{-16})$, 
+The following output shows that `Model 2` is superior $(p<0.001)$, 
 and was therefore used in our final analysis.
 
 ```{r}
@@ -579,7 +603,11 @@ emplogitplot1(has_casualty ~ (yday), data = crashes, ngroups = "all")
 ## 4. Final model
 
 The following table is the complete model used in our analysis. Variable names
-are raw, as seen in our code. 
+are raw, as seen in our code. These results are compared to a baseline MVC in 
+which no non-motor vehicle or motorcycle was involved, the cause of the MVC
+was aggressive/reckless driving, and the MVC occurred on January 1st and a
+weekday.
+
 ```{r}
 #| label: full-model-output
 #| tbl-cap: Full model output
